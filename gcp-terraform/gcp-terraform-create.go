@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-        // https://github.com/hashicorp/terraform-exec
+
+	// https://github.com/hashicorp/terraform-exec
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/hashicorp/terraform-exec/tfinstall"
 )
@@ -22,7 +23,7 @@ func main() {
 		panic(err)
 	}
 
-	workingDir := "/path/to/working/dir"
+	workingDir := "/home/Stanislav/wireguard-bot/gcp-terraform/infrastructure"
 	tf, err := tfexec.NewTerraform(workingDir, execPath)
 	if err != nil {
 		panic(err)
