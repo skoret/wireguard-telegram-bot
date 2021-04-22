@@ -18,14 +18,22 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	done := make(chan struct{})
 	go func() {
 		if err := tg.Run(ctx); err != nil {
 			log.Fatalf("error running telegram: %s", err.Error())
 		}
+		close(done)
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("graceful shutdown")
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		sig := <-quit
+		log.Printf("graceful shutdown with signal %v", sig)
+		cancel()
+		<-done
+	}()
+	<-done
 }

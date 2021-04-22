@@ -4,11 +4,13 @@ import (
 	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
+	"sync"
 )
 
 type Bot struct {
-	api *tgbotapi.BotAPI
-	wg  interface{} // TODO
+	api       *tgbotapi.BotAPI
+	wg        *sync.WaitGroup
+	wireguard struct{} // TODO
 }
 
 // NewBot creates new Bot instance
@@ -21,11 +23,14 @@ func NewBot(token string) (*Bot, error) {
 	log.Printf("bot user: %+v", api.Self)
 	return &Bot{
 		api: api,
-		wg:  nil,
+		wg:  &sync.WaitGroup{},
 	}, nil
 }
 
 func (b *Bot) Run(ctx context.Context) error {
+	// wait all running handlers to finish
+	defer b.wg.Wait()
+
 	config := tgbotapi.NewUpdate(0)
 	config.Timeout = 30
 
@@ -35,28 +40,32 @@ func (b *Bot) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer b.api.StopReceivingUpdates()
 
 	for {
 		select {
 		case update := <-updates:
-			go func(upd tgbotapi.Update) {
-				if err := b.handle(upd); err != nil {
+			b.wg.Add(1)
+			go func() {
+				defer b.wg.Done()
+				if err := b.handle(&update); err != nil {
 					log.Printf("uups, it's error: %s", err.Error())
 				}
-			}(update)
+			}()
 		case <-ctx.Done():
 			log.Printf("stopping bot: %v", ctx.Err())
-			b.api.Debug = true
+			b.api.StopReceivingUpdates()
 			return nil
 		}
 	}
 }
 
 // TODO: handle different commands from user
-func (b *Bot) handle(update tgbotapi.Update) error {
+func (b *Bot) handle(update *tgbotapi.Update) error {
 	log.Printf("new update: %+v", update)
-	if update.Message == nil || update.Message.Text == "" {
+	if update.Message == nil {
+		return nil
+	}
+	if update.Message.Text == "" {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "meeeeh, send me smth")
 		if err := b.send(msg); err != nil {
 			return err
