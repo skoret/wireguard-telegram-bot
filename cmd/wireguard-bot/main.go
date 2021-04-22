@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/skoret/wireguard-bot/internal/telegram"
 	"log"
 	"os"
@@ -10,10 +11,9 @@ import (
 )
 
 func main() {
-	// TODO: use some config library to load token from env file
 	tg, err := telegram.NewBot(os.Getenv("TELEGRAM_APITOKEN"))
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to create telegram bot: %s", err.Error())
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -21,10 +21,10 @@ func main() {
 
 	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		if err := tg.Run(ctx); err != nil {
-			log.Fatalf("error running telegram: %s", err.Error())
+			log.Fatalf("failed to run telegram bot: %s", err.Error())
 		}
-		close(done)
 	}()
 
 	go func() {
