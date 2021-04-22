@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/skoret/wireguard-bot/telegram"
+	"github.com/skoret/wireguard-bot/internal/telegram"
 	"log"
 	"os"
 	"os/signal"
