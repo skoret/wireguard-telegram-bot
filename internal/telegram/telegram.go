@@ -2,7 +2,8 @@ package telegram
 
 import (
 	"context"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"errors"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"sync"
 )
@@ -14,13 +15,17 @@ type Bot struct {
 }
 
 // NewBot creates new Bot instance
-// TODO: NewBot should register available bot commands also
 func NewBot(token string) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("bot user: %+v", api.Self)
+
+	if err := setMyCommands(api); err != nil {
+		return nil, err
+	}
+
 	return &Bot{
 		api: api,
 		wg:  &sync.WaitGroup{},
@@ -36,10 +41,7 @@ func (b *Bot) Run(ctx context.Context) error {
 
 	// Start polling Telegram for updates
 	// TODO: someday it should be webhook instead of updates pulling
-	updates, err := b.api.GetUpdatesChan(config)
-	if err != nil {
-		return err
-	}
+	updates := b.api.GetUpdatesChan(config)
 
 	for {
 		select {
@@ -62,21 +64,50 @@ func (b *Bot) Run(ctx context.Context) error {
 // TODO: handle different commands from user
 func (b *Bot) handle(update *tgbotapi.Update) error {
 	log.Printf("new update: %+v", update)
-	if update.Message == nil {
-		return nil
-	}
-	if update.Message.Text == "" {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "meeeeh, send me smth")
+	// TODO: unify commands/callbacks handling
+	if update.Message != nil {
+		log.Printf("new message: %+v", update.Message)
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "run /menu, silly")
+
+		if update.Message.IsCommand() {
+			cmd, ok := commands[update.Message.Command()]
+			if ok {
+				msg.Text = cmd.text
+				msg.ReplyMarkup = *cmd.keyboard
+				// TODO: run some wireguard logic if needed
+			} else {
+				log.Printf("message received with unknown command: %s", update.Message.Command())
+			}
+		}
+
 		if err := b.send(msg); err != nil {
 			return err
 		}
-		return nil
-	}
+	} else if update.CallbackQuery != nil {
+		query := update.CallbackQuery
+		log.Printf("new callback query: %+v", query)
+		callback := tgbotapi.NewCallback(query.ID, "")
+		if _, err := b.api.Request(callback); err != nil {
+			return err
+		}
 
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-	msg.ReplyToMessageID = update.Message.MessageID
-	if err := b.send(msg); err != nil {
-		return err
+		if query.Message == nil {
+			return errors.New("callback query received without message | it is possible only for inline mode")
+		}
+		log.Printf("message from callback: %+v", query.Message)
+
+		msg := tgbotapi.NewEditMessageText(query.Message.Chat.ID, query.Message.MessageID, "something went wrong, try again later")
+		cmd, ok := commands[query.Data]
+		if ok {
+			msg.Text = cmd.text
+			msg.ReplyMarkup = cmd.keyboard
+			// TODO: run some wireguard logic if needed
+		} else {
+			log.Printf("callback query received with unknown data field: %s", query.Data)
+		}
+		if err := b.send(msg); err != nil {
+			return err
+		}
 	}
 	return nil
 }
