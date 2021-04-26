@@ -69,6 +69,7 @@ var commands = map[string]*command{
 	ConfigForNewKeysCmd.Command:   &ConfigForNewKeysCmd,
 	ConfigForPublicKeyCmd.Command: &ConfigForPublicKeyCmd,
 	ConfigForPublicKeyCmd.Command: &ConfigForPublicKeyCmd,
+	DonateCmd.Command:             &DonateCmd,
 	HelpCmd.Command:               &HelpCmd,
 }
 

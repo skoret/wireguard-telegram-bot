@@ -9,12 +9,12 @@ var (
 		tgbotapi.NewInlineKeyboardRow(HelpCmd.button()),
 	)
 
-	backToMenuButton = tgbotapi.NewInlineKeyboardButtonData("<< back to menu", MenuCmd.Command)
+	goToMenuButton = tgbotapi.NewInlineKeyboardButtonData("go to menu", MenuCmd.Command)
 
 	newConfigKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(ConfigForNewKeysCmd.button()),
 		tgbotapi.NewInlineKeyboardRow(ConfigForPublicKeyCmd.button()),
-		tgbotapi.NewInlineKeyboardRow(backToMenuButton),
+		tgbotapi.NewInlineKeyboardRow(goToMenuButton),
 	)
 
 	configForPublicKeyKeyboard = tgbotapi.NewInlineKeyboardMarkup(
@@ -24,15 +24,15 @@ var (
 				"https://www.wireguard.com/quickstart/#key-generation",
 			),
 		),
-		tgbotapi.NewInlineKeyboardRow(backToMenuButton),
+		tgbotapi.NewInlineKeyboardRow(goToMenuButton),
 	)
 
 	donateKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(backToMenuButton),
+		tgbotapi.NewInlineKeyboardRow(goToMenuButton),
 	)
 
 	helpKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(backToMenuButton),
+		tgbotapi.NewInlineKeyboardRow(goToMenuButton),
 	)
 )
 

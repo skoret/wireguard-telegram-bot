@@ -64,52 +64,25 @@ func (b *Bot) Run(ctx context.Context) error {
 // TODO: handle different commands from user
 func (b *Bot) handle(update *tgbotapi.Update) error {
 	log.Printf("new update: %+v", update)
-	// TODO: unify commands/callbacks handling
-	if update.Message != nil {
-		log.Printf("new message: %+v", update.Message)
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "run /menu, silly")
+	var (
+		res tgbotapi.Chattable
+		err error
+	)
+	switch {
+	case update.Message != nil:
+		res, err = b.handleMessage(update.Message)
+	case update.CallbackQuery != nil:
+		res, err = b.handleQuery(update.CallbackQuery)
+	default:
+		return errors.New("unable to handle such update")
+	}
 
-		if update.Message.IsCommand() {
-			cmd, ok := commands[update.Message.Command()]
-			if ok {
-				msg.Text = cmd.text
-				msg.ReplyMarkup = *cmd.keyboard
-				// TODO: run some wireguard logic if needed
-			} else {
-				log.Printf("message received with unknown command: %s", update.Message.Command())
-			}
-		}
-
-		if err := b.send(msg); err != nil {
-			return err
-		}
-	} else if update.CallbackQuery != nil {
-		query := update.CallbackQuery
-		log.Printf("new callback query: %+v", query)
-		callback := tgbotapi.NewCallback(query.ID, "")
-		if _, err := b.api.Request(callback); err != nil {
-			return err
-		}
-
-		if query.Message == nil {
-			return errors.New("callback query received without message | it is possible only for inline mode")
-		}
-		log.Printf("message from callback: %+v", query.Message)
-
-		msg := tgbotapi.NewEditMessageText(query.Message.Chat.ID, query.Message.MessageID, "something went wrong, try again later")
-		cmd, ok := commands[query.Data]
-		if ok {
-			msg.Text = cmd.text
-			msg.ReplyMarkup = cmd.keyboard
-			// TODO: run some wireguard logic if needed
-		} else {
-			log.Printf("callback query received with unknown data field: %s", query.Data)
-		}
-		if err := b.send(msg); err != nil {
+	if res != nil {
+		if err := b.send(res); err != nil {
 			return err
 		}
 	}
-	return nil
+	return err
 }
 
 // TODO: send and files too
