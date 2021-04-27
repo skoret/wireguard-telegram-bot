@@ -1,0 +1,10 @@
+[Interface]
+Address = {{ .Address }}
+ListenPort = {{ .ListenPort }}
+PrivateKey = {{ .PrivateKey }}
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o {{ .NetInterface }} -j MASQUERADE; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o {{ .NetInterface }} -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o {{ .NetInterface }} -j MASQUERADE; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o {{ .NetInterface }} -j MASQUERADE
+
+[Peer]
+PublicKey = {{ .PublicKey }}
+AllowedIPs = {{ .AllowedIPs }}

@@ -1,4 +1,4 @@
-package main
+package wg-gcp-terraform
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-exec/tfinstall"
 )
 
-func main() {
+func wg_gcp_terraform() {
 	tmpDir, err := ioutil.TempDir("", "tfinstall")
 	if err != nil {
 		panic(err)

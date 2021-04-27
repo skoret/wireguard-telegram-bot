@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
-	_ "github.com/joho/godotenv/autoload"
-	"github.com/skoret/wireguard-bot/internal/telegram"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	_ "github.com/joho/godotenv/autoload"
+	"github.com/skoret/wireguard-bot/internal/telegram"
 )
 
 func main() {
@@ -36,4 +38,7 @@ func main() {
 		<-done
 	}()
 	<-done
+
+	config := configs.handle_client_config()
+	fmt.Println(config)
 }
