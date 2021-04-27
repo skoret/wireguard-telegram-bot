@@ -13,3 +13,9 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Ignore actual env file
+*.env
+
+# Ignore Intellij generated directories
+.idea
