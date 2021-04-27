@@ -3,6 +3,7 @@ package configs
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"text/template"
 )
 
@@ -26,7 +27,7 @@ type ServerConfig struct {
 	AllowedIPs string
 }
 
-func Handle_client_config() string {
+func Handle_client_config() {
 
 	clientConfig := ClientConfig{
 		Address:    "10.8.0.2/24",
@@ -52,17 +53,21 @@ func Handle_client_config() string {
 		panic(err)
 	}
 
+	// TODO: Relative path to root dir of project
+	parent := filepath.Dir(wd)
+	grandParent := filepath.Dir(parent)
+
 	/// Processing client config
-	clientTemplatePath := wd + "/client.template"
+	clientTemplatePath := grandParent + "/internal/utils/client.template"
 	t, err := template.ParseFiles(clientTemplatePath)
 	if err != nil {
 		panic(err)
 	}
 
-	clientConfigFile, err := os.Create(wd + "/client.conf")
+	clientConfigFile, err := os.Create(grandParent + "/internal/utils/client.conf")
 	if err != nil {
 		log.Println("create file: ", err)
-		return
+		panic(err)
 	}
 
 	err = t.Execute(clientConfigFile, clientConfig)
@@ -73,16 +78,16 @@ func Handle_client_config() string {
 	clientConfigFile.Close()
 
 	/// Processing server config
-	serverTemplatePath := wd + "/server.template"
+	serverTemplatePath := grandParent + "/internal/utils/server.template"
 	t, err = template.ParseFiles(serverTemplatePath)
 	if err != nil {
 		panic(err)
 	}
 
-	serverConfigFile, err := os.Create(wd + "/server.conf")
+	serverConfigFile, err := os.Create(grandParent + "/internal/utils/server.conf")
 	if err != nil {
 		log.Println("create file: ", err)
-		return
+		panic(err)
 	}
 
 	err = t.Execute(serverConfigFile, serverConfig)
@@ -91,6 +96,4 @@ func Handle_client_config() string {
 	}
 
 	serverConfigFile.Close()
-
-	return "I am config function!"
 }
