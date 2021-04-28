@@ -3,13 +3,18 @@ package main
 import (
 	"flag"
 	"fmt"
-	"golang.zx2c4.com/wireguard/wgctrl"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"log"
 	"net"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
+
+	"golang.zx2c4.com/wireguard/wgctrl"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
+
+const wg0 = "wg0"
 
 func main() {
 	flag.Parse()
@@ -24,7 +29,7 @@ func main() {
 		}
 	}()
 
-	device, err := c.Device("wg0")
+	device, err := c.Device(wg0)
 	if err != nil {
 		log.Fatalf("failed to get device %q: %v", device, err)
 	}
@@ -59,7 +64,7 @@ func main() {
 		},
 	}
 
-	if err := c.ConfigureDevice("wg0", cfg); err != nil {
+	if err := c.ConfigureDevice(wg0, cfg); err != nil {
 		if os.IsNotExist(err) {
 			fmt.Println(err)
 		} else {
@@ -70,7 +75,50 @@ func main() {
 	show(device)
 
 	fmt.Println("we need to run 'wg-quick save wg0' to dump updated interface config to config file")
-	//cmd := exec.Command("wg-quick", "save")
+	if err := WgQuickSave(wg0); err != nil {
+		panic(err)
+	}
+	if err := WgShow(); err != nil {
+		panic(err)
+	}
+	if err := WgShowConf(wg0); err != nil {
+		panic(err)
+	}
+	if err := CatWgConf(wg0); err != nil {
+		panic(err)
+	}
+}
+
+func WgQuickSave(wg string) error {
+	fmt.Println("--- WgQuickSave ---")
+	cmd := exec.Command("wg-quick", "save", wg)
+	err := cmd.Run()
+	fmt.Println("-------------------")
+	return err
+}
+
+func WgShow() error {
+	fmt.Println("------ WgShow -----")
+	cmd := exec.Command("wg", "show")
+	err := cmd.Run()
+	fmt.Println("-------------------")
+	return err
+}
+
+func WgShowConf(wg string) error {
+	fmt.Println("---- WgShowConf ---")
+	cmd := exec.Command("wg", "showconf", wg)
+	err := cmd.Run()
+	fmt.Println("-------------------")
+	return err
+}
+
+func CatWgConf(wg string) error {
+	fmt.Println("---- CatWgConf ----")
+	cmd := exec.Command("cat", filepath.Join("etc", "wireguard", wg+".conf"))
+	err := cmd.Run()
+	fmt.Println("-------------------")
+	return err
 }
 
 func show(d *wgtypes.Device) {
