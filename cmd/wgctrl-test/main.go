@@ -18,7 +18,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to open wgctrl: %v", err)
 	}
-	defer c.Close()
+	defer func() {
+		if err := c.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	device, err := c.Device("wg0")
 	if err != nil {
@@ -66,6 +70,7 @@ func main() {
 	show(device)
 
 	fmt.Println("we need to run 'wg-quick save wg0' to dump updated interface config to config file")
+	//cmd := exec.Command("wg-quick", "save")
 }
 
 func show(d *wgtypes.Device) {

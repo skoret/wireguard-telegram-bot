@@ -17,11 +17,12 @@ type ClientConfig struct {
 	DNS        []string
 
 	PublicKey  string
-	AllowedIPs string
+	AllowedIPs []string
 }
 
 type ServerConfig struct {
 	Address      string
+	SaveConfig   bool
 	ListenPort   string
 	PrivateKey   string
 	NetInterface string
@@ -31,7 +32,7 @@ type ServerConfig struct {
 
 type PeerConfig struct {
 	PublicKey  string
-	AllowedIPs string
+	AllowedIPs []string
 }
 
 const (
@@ -47,7 +48,9 @@ var (
 		}).ParseFiles(filepath.Join(tmplFolder, clientTmplFile)),
 	)
 	serverTmpl = template.Must(
-		template.ParseFiles(filepath.Join(tmplFolder, serverTmplFile)),
+		template.New(serverTmplFile).Funcs(template.FuncMap{
+			"join": strings.Join,
+		}).ParseFiles(filepath.Join(tmplFolder, serverTmplFile)),
 	)
 )
 
