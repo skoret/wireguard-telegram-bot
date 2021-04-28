@@ -61,6 +61,7 @@ var (
 
 				PublicKey:  os.Getenv("SERVER_PUB_KEY"),
 				AllowedIPs: []string{"0.0.0.0/0"},
+				Endpoint:   os.Getenv("SERVER_ENDPOINT"),
 			}
 			cfgFile, err := cfgs.ProcessClientConfig(clientConfig)
 			if err != nil {

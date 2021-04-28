@@ -18,6 +18,7 @@ type ClientConfig struct {
 
 	PublicKey  string
 	AllowedIPs []string
+	Endpoint   string
 }
 
 type ServerConfig struct {
