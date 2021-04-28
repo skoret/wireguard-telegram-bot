@@ -1,17 +1,22 @@
-name: GitHub Actions Demo
-on: [push]
+name: Lint Go Code
+
+on:
+  push:
+    branches:
+      - github-actions
+
 jobs:
-  Explore-GitHub-Actions:
-    runs-on: ubuntu-latest
+  lint:
+    runs-on: ubuntu-18.04
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Check out repository code
-        uses: actions/checkout@v2
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          stable: 'false'
+          go-version: '1.16.3'
+
+      - name: Lint
         run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.26.0
+
+          golangci-lint run
