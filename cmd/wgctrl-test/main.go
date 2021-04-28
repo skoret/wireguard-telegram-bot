@@ -92,6 +92,7 @@ func main() {
 func WgQuickSave(wg string) error {
 	fmt.Println("--- WgQuickSave ---")
 	cmd := exec.Command("wg-quick", "save", wg)
+	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	fmt.Println("-------------------")
 	return err
@@ -100,6 +101,7 @@ func WgQuickSave(wg string) error {
 func WgShow() error {
 	fmt.Println("------ WgShow -----")
 	cmd := exec.Command("wg", "show")
+	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	fmt.Println("-------------------")
 	return err
@@ -108,6 +110,7 @@ func WgShow() error {
 func WgShowConf(wg string) error {
 	fmt.Println("---- WgShowConf ---")
 	cmd := exec.Command("wg", "showconf", wg)
+	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	fmt.Println("-------------------")
 	return err
@@ -115,7 +118,8 @@ func WgShowConf(wg string) error {
 
 func CatWgConf(wg string) error {
 	fmt.Println("---- CatWgConf ----")
-	cmd := exec.Command("cat", filepath.Join("etc", "wireguard", wg+".conf"))
+	cmd := exec.Command("cat", filepath.Join("/etc", "wireguard", wg+".conf"))
+	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	fmt.Println("-------------------")
 	return err
