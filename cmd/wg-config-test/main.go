@@ -1,86 +1,65 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"io"
+	"golang.zx2c4.com/wireguard/wgctrl"
+	"log"
+	"net"
 	"os"
-
-	cfgs "github.com/skoret/wireguard-bot/internal/wireguard/configs"
+	"os/exec"
 )
 
+const wg0 = "wg0"
+
 func main() {
-	clientConfig := cfgs.ClientConfig{
-		Address: "10.8.0.2/24",
-		//PrivateKey: "aGsGuo9ODki0ZpS1U3c28tsI6UWjCW1Gbn8lIYRamXA=",
-		DNS: []string{"8.8.8.8", "8.8.4.4"},
+	flag.Parse()
 
-		PublicKey:  "G8naBU85RGmh2iZBi2KL3qomJOGKy5jvU97bO2I5tQ4=",
-		AllowedIPs: []string{"0.0.0.0/0"},
-	}
-
-	serverConfig := cfgs.ServerConfig{
-		Address:      "10.8.0.1/24",
-		SaveConfig:   true,
-		ListenPort:   "35053",
-		PrivateKey:   "SDZnNuMWQz+cKlr6f7Vu+Q98R+sl1D9EJPmDWWJZaUM=",
-		NetInterface: "eth",
-		Peers: []cfgs.PeerConfig{
-			{
-				PublicKey:  "KQwNg8z7nSgD23nHga8PKeSrh2GupEstDkQ3Jww5eg4=",
-				AllowedIPs: []string{"10.8.0.2/32"},
-			},
-			{
-				PublicKey:  "KQwNg8z7nSgD23nHga8PKeSrh2GupEstDkQ3Jww5eg4=",
-				AllowedIPs: []string{"10.8.0.3/32", "10.8.0.4/32"},
-			},
-		},
-	}
-
-	/// Processing client config
-	fmt.Println("------ client cfg 1 ------")
-	cfg, err := cfgs.ProcessClientConfig(clientConfig)
+	c, err := wgctrl.New()
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to open wgctrl: %v", err)
 	}
 	defer func() {
-		if err := cfg.Close(); err != nil {
+		if err := c.Close(); err != nil {
 			panic(err)
 		}
 	}()
-	if _, err := io.Copy(os.Stdout, cfg); err != nil {
+
+	device, err := c.Device(wg0)
+	if err != nil {
+		log.Fatalf("failed to get device %q: %v", device, err)
+	}
+
+	var maxIp *net.IPNet
+	for _, peer := range device.Peers {
+		for _, ipNet := range peer.AllowedIPs {
+			if maxIp == nil {
+				maxIp = &ipNet
+				continue
+			}
+			if ipNet.IP[15] > maxIp.IP[15] {
+				maxIp = &ipNet
+			}
+		}
+	}
+	if maxIp == nil {
+		panic("puk")
+	}
+
+	if err := WgShow(); err != nil {
 		panic(err)
 	}
 
-	fmt.Println("--------------------------")
-	fmt.Println("------ client cfg 2 ------")
-	clientConfig.PrivateKey = "aGsGuo9ODki0ZpS1U3c28tsI6UWjCW1Gbn8lIYRamXA="
-	cfg, err = cfgs.ProcessClientConfig(clientConfig)
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := cfg.Close(); err != nil {
-			panic(err)
-		}
-	}()
-	if _, err := io.Copy(os.Stdout, cfg); err != nil {
-		panic(err)
-	}
+	log.Printf("max ip now is: %v", maxIp.String())
+	maxIp.IP[15] += 1
+	log.Printf("next ip is: %v", maxIp.String())
+}
 
-	fmt.Println("--------------------------")
-	/// Processing server config
-	fmt.Println("------ server cfg 0 ------")
-	cfg, err = cfgs.ProcessServerConfig(serverConfig)
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := cfg.Close(); err != nil {
-			panic(err)
-		}
-	}()
-	if _, err := io.Copy(os.Stdout, cfg); err != nil {
-		panic(err)
-	}
-	fmt.Println("------------------------")
+func WgShow() error {
+	fmt.Println("------ WgShow -----")
+	cmd := exec.Command("wg", "show")
+	cmd.Stdout = os.Stdout
+	err := cmd.Run()
+	fmt.Println("-------------------")
+	return err
 }
