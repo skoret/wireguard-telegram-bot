@@ -1,9 +1,0 @@
-[Interface]
-Address = {{ .Address }}
-PrivateKey = {{ .PrivateKey }}
-DNS = {{ .DNS }}
-
-[Peer]
-PublicKey ={{ .PublicKey }}
-AllowedIPs = {{ .AllowedIPs }}
-Endpoint = {{ .Endpoint }}
