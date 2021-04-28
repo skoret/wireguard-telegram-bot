@@ -37,7 +37,7 @@ func main() {
 				maxIp = &ipNet
 				continue
 			}
-			if ipNet.IP[15] > maxIp.IP[15] {
+			if ipNet.IP.To4()[3] > maxIp.IP.To4()[3] {
 				maxIp = &ipNet
 			}
 		}
@@ -51,7 +51,7 @@ func main() {
 	}
 
 	log.Printf("max ip now is: %v", maxIp.String())
-	maxIp.IP[15] += 1
+	maxIp.IP.To4()[3] += 1
 	log.Printf("next ip is: %v", maxIp.String())
 }
 
