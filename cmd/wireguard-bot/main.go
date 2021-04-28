@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
-	_ "github.com/joho/godotenv/autoload"
-	"github.com/skoret/wireguard-bot/internal/telegram"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	_ "github.com/joho/godotenv/autoload"
+	"github.com/skoret/wireguard-bot/internal/telegram"
+	configs "github.com/skoret/wireguard-bot/internal/utils"
 )
 
 func main() {
@@ -15,6 +17,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create telegram bot: %s", err.Error())
 	}
+
+	// TODO: Insert templating procedure to apropriate function in telegram
+	configs.Handle_client_config()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -36,4 +41,5 @@ func main() {
 		<-done
 	}()
 	<-done
+
 }
