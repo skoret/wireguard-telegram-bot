@@ -2,11 +2,15 @@ package telegram
 
 import (
 	"encoding/json"
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	cfgs "github.com/skoret/wireguard-bot/internal/wireguard/configs"
+	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"log"
+	"net"
 	"os"
+	"os/exec"
 )
 
 type handler func(data interface{}) interface{}
@@ -44,11 +48,11 @@ var (
 		},
 		text: "this is your new config for public wireguard vpn server, keep it in secret!",
 		handler: func(data interface{}) interface{} {
+			// conf file creation
 			pri, err := wgtypes.GeneratePrivateKey()
 			if err != nil {
 				log.Fatalf("failed to generate private key: %v", err)
 			}
-			//pub := pri.PublicKey()
 			address := "10.8.0.3/32"
 			clientConfig := cfgs.ClientConfig{
 				Address:    address,
@@ -58,11 +62,58 @@ var (
 				PublicKey:  os.Getenv("SERVER_PUB_KEY"),
 				AllowedIPs: []string{"0.0.0.0/0"},
 			}
-			cfg, err := cfgs.ProcessClientConfig(clientConfig)
+			cfgFile, err := cfgs.ProcessClientConfig(clientConfig)
 			if err != nil {
 				panic(err)
 			}
-			return cfg
+
+			// wg server conf update
+			pub := pri.PublicKey()
+			_, ipNet, err := net.ParseCIDR(address)
+			if err != nil {
+				log.Fatalf("failed to parse ip with mask: %v", err)
+			}
+
+			cfg := wgtypes.Config{
+				ReplacePeers: false,
+				Peers: []wgtypes.PeerConfig{
+					{
+						PublicKey:                   pub,
+						Remove:                      false,
+						UpdateOnly:                  false,
+						PresharedKey:                nil,
+						Endpoint:                    nil,
+						PersistentKeepaliveInterval: nil,
+						ReplaceAllowedIPs:           false,
+						AllowedIPs:                  []net.IPNet{*ipNet},
+					},
+				},
+			}
+			c, err := wgctrl.New()
+			if err != nil {
+				log.Fatalf("failed to open wgctrl: %v", err)
+			}
+			defer func() {
+				if err := c.Close(); err != nil {
+					panic(err)
+				}
+			}()
+			if err := c.ConfigureDevice("wg0", cfg); err != nil {
+				if os.IsNotExist(err) {
+					fmt.Println(err)
+				} else {
+					log.Fatalf("Unknown config error: %v", err)
+				}
+			}
+			fmt.Println("--- WgQuickSave ---")
+			cmd := exec.Command("wg-quick", "save", "wg0")
+			cmd.Stdout = os.Stdout
+			if err := cmd.Run(); err != nil {
+				panic(err)
+			}
+			fmt.Println("-------------------")
+
+			return cfgFile
 		},
 	}
 	ConfigForPublicKeyCmd = command{
