@@ -65,7 +65,7 @@ func (b *Bot) Run(ctx context.Context) error {
 func (b *Bot) handle(update *tgbotapi.Update) error {
 	log.Printf("new update: %+v", update)
 	var (
-		res tgbotapi.Chattable
+		res []tgbotapi.Chattable
 		err error
 	)
 	switch {
@@ -78,8 +78,10 @@ func (b *Bot) handle(update *tgbotapi.Update) error {
 	}
 
 	if res != nil {
-		if err := b.send(res); err != nil {
-			return err
+		for _, resp := range res {
+			if err := b.send(resp); err != nil {
+				return err
+			}
 		}
 	}
 	return err
