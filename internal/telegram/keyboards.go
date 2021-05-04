@@ -2,6 +2,10 @@ package telegram
 
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
+func (cmd command) button() tgbotapi.InlineKeyboardButton {
+	return tgbotapi.NewInlineKeyboardButtonData(cmd.Description, cmd.Command)
+}
+
 var (
 	menuKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(NewConfigCmd.button()),

@@ -18,6 +18,7 @@ type ClientConfig struct {
 
 	PublicKey  string
 	AllowedIPs []string
+	Endpoint   string
 }
 
 type ServerConfig struct {
@@ -43,14 +44,14 @@ const (
 var (
 	tmplFolder = os.Getenv("TEMPLATES_FOLDER")
 	clientTmpl = template.Must(
-		template.New(clientTmplFile).Funcs(template.FuncMap{
-			"join": strings.Join,
-		}).ParseFiles(filepath.Join(tmplFolder, clientTmplFile)),
+		template.New(clientTmplFile).
+			Funcs(template.FuncMap{"join": strings.Join}).
+			ParseFiles(filepath.Join(tmplFolder, clientTmplFile)),
 	)
 	serverTmpl = template.Must(
-		template.New(serverTmplFile).Funcs(template.FuncMap{
-			"join": strings.Join,
-		}).ParseFiles(filepath.Join(tmplFolder, serverTmplFile)),
+		template.New(serverTmplFile).
+			Funcs(template.FuncMap{"join": strings.Join}).
+			ParseFiles(filepath.Join(tmplFolder, serverTmplFile)),
 	)
 )
 

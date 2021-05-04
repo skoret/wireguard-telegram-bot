@@ -2,24 +2,17 @@ package telegram
 
 import (
 	"encoding/json"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	cfgs "github.com/skoret/wireguard-bot/internal/wireguard/configs"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"log"
-	"os"
 )
 
-type handler func(data interface{}) interface{}
+type handler func(b *Bot, chatID int64) (tgbotapi.Chattable, error)
 
 type command struct {
 	tgbotapi.BotCommand
 	text     string
 	keyboard *tgbotapi.InlineKeyboardMarkup
 	handler  handler
-}
-
-func (cmd command) button() tgbotapi.InlineKeyboardButton {
-	return tgbotapi.NewInlineKeyboardButtonData(cmd.Description, cmd.Command)
 }
 
 var (
@@ -43,27 +36,6 @@ var (
 			Description: "create new config file for new generated key pair",
 		},
 		text: "this is your new config for public wireguard vpn server, keep it in secret!",
-		handler: func(data interface{}) interface{} {
-			pri, err := wgtypes.GeneratePrivateKey()
-			if err != nil {
-				log.Fatalf("failed to generate private key: %v", err)
-			}
-			//pub := pri.PublicKey()
-			address := "10.8.0.3/32"
-			clientConfig := cfgs.ClientConfig{
-				Address:    address,
-				PrivateKey: pri.String(),
-				DNS:        []string{"8.8.8.8", "8.8.4.4"},
-
-				PublicKey:  os.Getenv("SERVER_PUB_KEY"),
-				AllowedIPs: []string{"0.0.0.0/0"},
-			}
-			cfg, err := cfgs.ProcessClientConfig(clientConfig)
-			if err != nil {
-				panic(err)
-			}
-			return cfg
-		},
 	}
 	ConfigForPublicKeyCmd = command{
 		BotCommand: tgbotapi.BotCommand{

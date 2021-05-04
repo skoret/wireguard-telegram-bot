@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	_ "github.com/joho/godotenv/autoload"
+
 	"github.com/skoret/wireguard-bot/internal/telegram"
 )
 
