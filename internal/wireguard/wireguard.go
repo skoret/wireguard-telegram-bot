@@ -92,7 +92,7 @@ func (w *Wireguard) updateDevice(cfg wgtypes.Config) error {
 	if err := w.client.ConfigureDevice(w.device, cfg); err != nil {
 		return errors.Wrap(err, "failed to update server configuration")
 	}
-	cmd := exec.Command("wg-quick", "save", "wg0")
+	cmd := exec.Command("wg-quick", "save", w.device)
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
 		return errors.Wrap(err, "failed to dump server config to conf file")
