@@ -55,15 +55,15 @@ var (
 	)
 )
 
-func ProcessClientConfig(cfg ClientConfig) (io.ReadCloser, error) {
+func ProcessClientConfig(cfg ClientConfig) (io.Reader, error) {
 	return processConfig(cfg)
 }
 
-func ProcessServerConfig(cfg ServerConfig) (io.ReadCloser, error) {
+func ProcessServerConfig(cfg ServerConfig) (io.Reader, error) {
 	return processConfig(cfg)
 }
 
-func processConfig(cfg interface{}) (io.ReadCloser, error) {
+func processConfig(cfg interface{}) (io.Reader, error) {
 	var err error
 	pr, pw := io.Pipe()
 	go func() {

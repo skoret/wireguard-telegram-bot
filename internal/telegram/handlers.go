@@ -1,17 +1,12 @@
 package telegram
 
 import (
+	"fmt"
 	"log"
-	"net"
-	"os"
-	"os/exec"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
-	"golang.zx2c4.com/wireguard/wgctrl"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-
-	cfgs "github.com/skoret/wireguard-bot/internal/wireguard/configs"
 )
 
 type responses []tgbotapi.Chattable
@@ -64,74 +59,15 @@ func (b *Bot) handleQuery(query *tgbotapi.CallbackQuery) (responses, error) {
 }
 
 func (b *Bot) handleConfigForNewKeys(chadID int64) (tgbotapi.Chattable, error) {
-	pri, err := wgtypes.GeneratePrivateKey()
+	cfg, err := b.wireguard.CreateNewConfig()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate private key")
+		return nil, errors.Wrap(err, "failed to create new config")
 	}
-	// TODO: get ip net dynamically
-	address := "10.8.0.3/32"
-	clientConfig := cfgs.ClientConfig{
-		Address:    address,
-		PrivateKey: pri.String(),
-		DNS:        []string{"8.8.8.8", "8.8.4.4"},
-
-		PublicKey:  os.Getenv("SERVER_PUB_KEY"),
-		AllowedIPs: []string{"0.0.0.0/0"},
-		Endpoint:   os.Getenv("SERVER_ENDPOINT"),
-	}
-	cfgFile, err := cfgs.ProcessClientConfig(clientConfig)
-	if err != nil {
-		panic(err)
-	}
-
-	// wg server conf update
-	pub := pri.PublicKey()
-	_, ipNet, err := net.ParseCIDR(address)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse ip with mask")
-	}
-
-	cfg := wgtypes.Config{
-		ReplacePeers: false,
-		Peers: []wgtypes.PeerConfig{
-			{
-				PublicKey:                   pub,
-				Remove:                      false,
-				UpdateOnly:                  false,
-				PresharedKey:                nil,
-				Endpoint:                    nil,
-				PersistentKeepaliveInterval: nil,
-				ReplaceAllowedIPs:           false,
-				AllowedIPs:                  []net.IPNet{*ipNet},
-			},
-		},
-	}
-
-	// TODO: use wgctrl client from Bot.wireguard field
-	c, err := wgctrl.New()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to open wgctrl")
-	}
-	defer func() {
-		if err := c.Close(); err != nil {
-			log.Println(err)
-		}
-	}()
-	if err := c.ConfigureDevice("wg0", cfg); err != nil {
-		return nil, errors.Wrap(err, "failed to update server configuration")
-	}
-
-	cmd := exec.Command("wg-quick", "save", "wg0")
-	cmd.Stdout = os.Stdout
-	if err := cmd.Run(); err != nil {
-		return nil, errors.Wrap(err, "failed to dump server config to conf file")
-	}
-
+	timestamp := time.Now().Unix()
 	file := tgbotapi.FileReader{
-		Name:   "wg-tg-test.conf",
-		Reader: cfgFile,
+		Name:   fmt.Sprintf("wg-tg-%d.conf", timestamp),
+		Reader: cfg,
 	}
-
 	return tgbotapi.NewDocument(chadID, file), nil
 }
 

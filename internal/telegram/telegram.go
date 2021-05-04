@@ -2,17 +2,19 @@ package telegram
 
 import (
 	"context"
-	"errors"
 	"log"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/pkg/errors"
+
+	"github.com/skoret/wireguard-bot/internal/wireguard"
 )
 
 type Bot struct {
-	api       *tgbotapi.BotAPI
 	wg        *sync.WaitGroup
-	wireguard struct{} // TODO
+	api       *tgbotapi.BotAPI
+	wireguard *wireguard.Wireguard
 }
 
 // NewBot creates new Bot instance
@@ -27,15 +29,26 @@ func NewBot(token string) (*Bot, error) {
 		return nil, err
 	}
 
+	wguard, err := wireguard.NewWireguard()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create wireguard client")
+	}
+
 	return &Bot{
-		api: api,
-		wg:  &sync.WaitGroup{},
+		wg:        &sync.WaitGroup{},
+		api:       api,
+		wireguard: wguard,
 	}, nil
 }
 
 func (b *Bot) Run(ctx context.Context) error {
-	// wait all running handlers to finish
-	defer b.wg.Wait()
+	// wait all running handlers to finish and close wg connection
+	defer func() {
+		b.wg.Wait()
+		if err := b.wireguard.Close(); err != nil {
+			log.Printf("failed to close wireguard connection: %v", err)
+		}
+	}()
 
 	config := tgbotapi.NewUpdate(0)
 	config.Timeout = 30
