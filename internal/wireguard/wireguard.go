@@ -51,7 +51,7 @@ func (w *Wireguard) CreateNewConfig() (io.Reader, error) {
 	clientConfig := cfgs.ClientConfig{
 		Address:    ipNet.String(),
 		PrivateKey: pri.String(),
-		DNS:        []string{"8.8.8.8", "8.8.4.4"},
+		DNS:        w.dns,
 
 		PublicKey:  os.Getenv("SERVER_PUB_KEY"),
 		AllowedIPs: []string{"0.0.0.0/0"},
