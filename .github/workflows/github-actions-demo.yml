@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: self-hosted
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-go@v2
