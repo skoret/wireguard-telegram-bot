@@ -22,4 +22,4 @@ jobs:
           PUBLIC_INTERFACE:  ${{ secrets.PUBLIC_INTERFACE }}
           TEMPLATES_FOLDER:  ${{ secrets.TEMPLATES_FOLDER }}
 
-        run: sudo /usr/local/go/bin/go run cmd/wireguard-bot/main.go
+        run: echo $TEMPLATES_FOLDER && sudo echo $TEMPLATES_FOLDER && sudo /usr/local/go/bin/go run cmd/wireguard-bot/main.go
