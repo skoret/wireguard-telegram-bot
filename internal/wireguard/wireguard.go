@@ -2,6 +2,7 @@ package wireguard
 
 import (
 	"io"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -26,6 +27,15 @@ func NewWireguard() (*Wireguard, error) {
 	if err != nil {
 		return nil, err
 	}
+	devs, err := client.Devices()
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("--- known devices: ---")
+	for i, d := range devs {
+		log.Printf("#%d device: %+v", i, d)
+	}
+	log.Printf("----------------------")
 	return &Wireguard{
 		device: os.Getenv("PUBLIC_INTERFACE"),
 		dns:    strings.Split(os.Getenv("DNS_IPS"), ","),
