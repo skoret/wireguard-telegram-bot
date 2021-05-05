@@ -22,4 +22,4 @@ jobs:
           PUBLIC_INTERFACE:  ${{ secrets.PUBLIC_INTERFACE }}
           TEMPLATES_FOLDER:  ${{ secrets.TEMPLATES_FOLDER }}
 
-        run: TELEGRAM_APITOKEN=$TELEGRAM_APITOKEN DNS_IPS=$DNS_IPS SERVER_PUB_KEY=$SERVER_PUB_KEY SERVER_ENDPOINT=$SERVER_ENDPOINT PUBLIC_INTERFACE=$PUBLIC_INTERFACE TEMPLATES_FOLDER=$TEMPLATES_FOLDER sudo /usr/local/go/bin/go run cmd/wireguard-bot/main.go
+        run: go run cmd/wireguard-bot/main.go
