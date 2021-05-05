@@ -21,5 +21,5 @@ jobs:
           SERVER_ENDPOINT:   ${{ secrets.SERVER_ENDPOINT }}
           PUBLIC_INTERFACE:  ${{ secrets.PUBLIC_INTERFACE }}
           TEMPLATES_FOLDER:  ${{ secrets.TEMPLATES_FOLDER }}
-          
-        run: "$TELEGRAM_APITOKEN" "$DNS_IPS" "$SERVER_PUB_KEY" "$SERVER_ENDPOINT" "$PUBLIC_INTERFACE" "$TEMPLATES_FOLDER" go run cmd/wireguard-bot/main.go
+
+        run: go run cmd/wireguard-bot/main.go
