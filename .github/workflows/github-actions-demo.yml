@@ -7,10 +7,19 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-go@v2
         with:
           go-version: '1.16.3'
-      - run: go run cmd/wireguard-bot/main.go
+      - shell: bash
+        env:
+          TELEGRAM_APITOKEN: ${{ secrets.TELEGRAM_APITOKEN }}
+          DNS_IPS:           ${{ secrets.DNS_IPS }}
+          SERVER_PUB_KEY:    ${{ secrets.SERVER_PUB_KEY }}
+          SERVER_ENDPOINT:   ${{ secrets.SERVER_ENDPOINT }}
+          PUBLIC_INTERFACE:  ${{ secrets.PUBLIC_INTERFACE }}
+          TEMPLATES_FOLDER:  ${{ secrets.TEMPLATES_FOLDER }}
+
+        run: $TELEGRAM_APITOKEN $DNS_IPS $SERVER_PUB_KEY $SERVER_ENDPOINT $PUBLIC_INTERFACE $TEMPLATES_FOLDER go run cmd/wireguard-bot/main.go
