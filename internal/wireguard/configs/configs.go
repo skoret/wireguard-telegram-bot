@@ -3,6 +3,7 @@ package configs
 import (
 	"errors"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,27 +44,36 @@ const (
 
 var (
 	tmplFolder = os.Getenv("TEMPLATES_FOLDER")
-	clientTmpl = template.Must(
-		template.New(clientTmplFile).Funcs(template.FuncMap{
-			"join": strings.Join,
-		}).ParseFiles(filepath.Join(tmplFolder, clientTmplFile)),
+	clientTmpl = must(
+		template.New(clientTmplFile).
+			Funcs(template.FuncMap{"join": strings.Join}).
+			ParseFiles(filepath.Join(tmplFolder, clientTmplFile)),
 	)
-	serverTmpl = template.Must(
-		template.New(serverTmplFile).Funcs(template.FuncMap{
-			"join": strings.Join,
-		}).ParseFiles(filepath.Join(tmplFolder, serverTmplFile)),
+	serverTmpl = must(
+		template.New(serverTmplFile).
+			Funcs(template.FuncMap{"join": strings.Join}).
+			ParseFiles(filepath.Join(tmplFolder, serverTmplFile)),
 	)
 )
 
-func ProcessClientConfig(cfg ClientConfig) (io.ReadCloser, error) {
+func must(t *template.Template, err error) *template.Template {
+	log.Printf("env variable: %s", os.Getenv("TEMPLATES_FOLDER"))
+	log.Printf("template folder: %s", tmplFolder)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+func ProcessClientConfig(cfg ClientConfig) (io.Reader, error) {
 	return processConfig(cfg)
 }
 
-func ProcessServerConfig(cfg ServerConfig) (io.ReadCloser, error) {
+func ProcessServerConfig(cfg ServerConfig) (io.Reader, error) {
 	return processConfig(cfg)
 }
 
-func processConfig(cfg interface{}) (io.ReadCloser, error) {
+func processConfig(cfg interface{}) (io.Reader, error) {
 	var err error
 	pr, pw := io.Pipe()
 	go func() {

@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: self-hosted
+    timeout-minutes: 1
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-go@v2
@@ -23,3 +24,7 @@ jobs:
           TEMPLATES_FOLDER:  ${{ secrets.TEMPLATES_FOLDER }}
 
         run: go run cmd/wireguard-bot/main.go
+
+      - uses: Sibz/github-status-action@v1
+        with: 
+          state: 'success'

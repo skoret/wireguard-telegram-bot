@@ -2,28 +2,17 @@ package telegram
 
 import (
 	"encoding/json"
-	"fmt"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	cfgs "github.com/skoret/wireguard-bot/internal/wireguard/configs"
-	"golang.zx2c4.com/wireguard/wgctrl"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"log"
-	"net"
-	"os"
-	"os/exec"
 )
 
-type handler func(data interface{}) interface{}
+type handler func(b *Bot, chatID int64) (tgbotapi.Chattable, error)
 
 type command struct {
 	tgbotapi.BotCommand
 	text     string
 	keyboard *tgbotapi.InlineKeyboardMarkup
 	handler  handler
-}
-
-func (cmd command) button() tgbotapi.InlineKeyboardButton {
-	return tgbotapi.NewInlineKeyboardButtonData(cmd.Description, cmd.Command)
 }
 
 var (
@@ -47,75 +36,6 @@ var (
 			Description: "create new config file for new generated key pair",
 		},
 		text: "this is your new config for public wireguard vpn server, keep it in secret!",
-		handler: func(data interface{}) interface{} {
-			// conf file creation
-			pri, err := wgtypes.GeneratePrivateKey()
-			if err != nil {
-				log.Fatalf("failed to generate private key: %v", err)
-			}
-			address := "10.8.0.3/32"
-			clientConfig := cfgs.ClientConfig{
-				Address:    address,
-				PrivateKey: pri.String(),
-				DNS:        []string{"8.8.8.8", "8.8.4.4"},
-
-				PublicKey:  os.Getenv("SERVER_PUB_KEY"),
-				AllowedIPs: []string{"0.0.0.0/0"},
-				Endpoint:   os.Getenv("SERVER_ENDPOINT"),
-			}
-			cfgFile, err := cfgs.ProcessClientConfig(clientConfig)
-			if err != nil {
-				panic(err)
-			}
-
-			// wg server conf update
-			pub := pri.PublicKey()
-			_, ipNet, err := net.ParseCIDR(address)
-			if err != nil {
-				log.Fatalf("failed to parse ip with mask: %v", err)
-			}
-
-			cfg := wgtypes.Config{
-				ReplacePeers: false,
-				Peers: []wgtypes.PeerConfig{
-					{
-						PublicKey:                   pub,
-						Remove:                      false,
-						UpdateOnly:                  false,
-						PresharedKey:                nil,
-						Endpoint:                    nil,
-						PersistentKeepaliveInterval: nil,
-						ReplaceAllowedIPs:           false,
-						AllowedIPs:                  []net.IPNet{*ipNet},
-					},
-				},
-			}
-			c, err := wgctrl.New()
-			if err != nil {
-				log.Fatalf("failed to open wgctrl: %v", err)
-			}
-			defer func() {
-				if err := c.Close(); err != nil {
-					panic(err)
-				}
-			}()
-			if err := c.ConfigureDevice("wg0", cfg); err != nil {
-				if os.IsNotExist(err) {
-					fmt.Println(err)
-				} else {
-					log.Fatalf("Unknown config error: %v", err)
-				}
-			}
-			fmt.Println("--- WgQuickSave ---")
-			cmd := exec.Command("wg-quick", "save", "wg0")
-			cmd.Stdout = os.Stdout
-			if err := cmd.Run(); err != nil {
-				panic(err)
-			}
-			fmt.Println("-------------------")
-
-			return cfgFile
-		},
 	}
 	ConfigForPublicKeyCmd = command{
 		BotCommand: tgbotapi.BotCommand{

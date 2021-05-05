@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"golang.zx2c4.com/wireguard/wgctrl"
 	"log"
 	"net"
 	"os"
 	"os/exec"
+
+	"golang.zx2c4.com/wireguard/wgctrl"
 )
 
 const wg0 = "wg0"
