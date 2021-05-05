@@ -3,7 +3,7 @@ name: Go run Code
 on:
   push:
     branches:
-      - github-actions
+      - wg-keys
 
 jobs:
   build:
