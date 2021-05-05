@@ -2,6 +2,10 @@ package telegram
 
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
+func (cmd command) button() tgbotapi.InlineKeyboardButton {
+	return tgbotapi.NewInlineKeyboardButtonData(cmd.Description, cmd.Command)
+}
+
 var (
 	menuKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(NewConfigCmd.button()),
@@ -9,12 +13,12 @@ var (
 		tgbotapi.NewInlineKeyboardRow(HelpCmd.button()),
 	)
 
-	backToMenuButton = tgbotapi.NewInlineKeyboardButtonData("<< back to menu", MenuCmd.Command)
+	goToMenuButton = tgbotapi.NewInlineKeyboardButtonData("go to menu", MenuCmd.Command)
 
 	newConfigKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(ConfigForNewKeysCmd.button()),
 		tgbotapi.NewInlineKeyboardRow(ConfigForPublicKeyCmd.button()),
-		tgbotapi.NewInlineKeyboardRow(backToMenuButton),
+		tgbotapi.NewInlineKeyboardRow(goToMenuButton),
 	)
 
 	configForPublicKeyKeyboard = tgbotapi.NewInlineKeyboardMarkup(
@@ -24,15 +28,15 @@ var (
 				"https://www.wireguard.com/quickstart/#key-generation",
 			),
 		),
-		tgbotapi.NewInlineKeyboardRow(backToMenuButton),
+		tgbotapi.NewInlineKeyboardRow(goToMenuButton),
 	)
 
 	donateKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(backToMenuButton),
+		tgbotapi.NewInlineKeyboardRow(goToMenuButton),
 	)
 
 	helpKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(backToMenuButton),
+		tgbotapi.NewInlineKeyboardRow(goToMenuButton),
 	)
 )
 

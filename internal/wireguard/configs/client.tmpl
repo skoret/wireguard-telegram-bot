@@ -1,0 +1,9 @@
+[Interface]
+Address = {{ .Address }}
+PrivateKey = {{ if .PrivateKey -}} {{ .PrivateKey }} {{- else -}} <paste your private key here> {{- end }}
+DNS = {{ join .DNS ", " }}
+
+[Peer]
+PublicKey = {{ .PublicKey }}
+AllowedIPs = {{ join .AllowedIPs ", " }}
+Endpoint = {{ .Endpoint }}

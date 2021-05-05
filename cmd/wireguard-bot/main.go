@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
-	_ "github.com/joho/godotenv/autoload"
-	"github.com/skoret/wireguard-bot/internal/telegram"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	_ "github.com/joho/godotenv/autoload"
+
+	"github.com/skoret/wireguard-bot/internal/telegram"
 )
 
 func main() {
@@ -36,4 +38,5 @@ func main() {
 		<-done
 	}()
 	<-done
+
 }

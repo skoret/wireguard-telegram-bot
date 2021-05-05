@@ -2,17 +2,17 @@ package telegram
 
 import (
 	"encoding/json"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
+
+type handler func(b *Bot, chatID int64) (tgbotapi.Chattable, error)
 
 type command struct {
 	tgbotapi.BotCommand
 	text     string
 	keyboard *tgbotapi.InlineKeyboardMarkup
-}
-
-func (cmd command) button() tgbotapi.InlineKeyboardButton {
-	return tgbotapi.NewInlineKeyboardButtonData(cmd.Description, cmd.Command)
+	handler  handler
 }
 
 var (
@@ -69,6 +69,7 @@ var commands = map[string]*command{
 	ConfigForNewKeysCmd.Command:   &ConfigForNewKeysCmd,
 	ConfigForPublicKeyCmd.Command: &ConfigForPublicKeyCmd,
 	ConfigForPublicKeyCmd.Command: &ConfigForPublicKeyCmd,
+	DonateCmd.Command:             &DonateCmd,
 	HelpCmd.Command:               &HelpCmd,
 }
 
