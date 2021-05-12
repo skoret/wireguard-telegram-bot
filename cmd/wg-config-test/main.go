@@ -1,21 +1,24 @@
 package main
 
 import (
-	"flag"
+	"bytes"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/exec"
 
+	"github.com/pkg/errors"
 	"golang.zx2c4.com/wireguard/wgctrl"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 const wg0 = "wg0"
 
 func main() {
-	flag.Parse()
-
+	if err := WgShow(); err != nil {
+		log.Fatalf("failed to run wg show: %v", err)
+	}
 	c, err := wgctrl.New()
 	if err != nil {
 		log.Fatalf("failed to open wgctrl: %v", err)
@@ -31,29 +34,15 @@ func main() {
 		log.Fatalf("failed to get device %q: %v", device, err)
 	}
 
-	var maxIp *net.IPNet
-	for _, peer := range device.Peers {
-		for _, ipNet := range peer.AllowedIPs {
-			if maxIp == nil {
-				maxIp = &ipNet
-				continue
-			}
-			if ipNet.IP.To4()[3] > maxIp.IP.To4()[3] {
-				maxIp = &ipNet
-			}
-		}
+	_, err = getDeviceAddress(device)
+	if err != nil {
+		log.Fatalf("failed to get device address: %v", err)
 	}
-	if maxIp == nil {
-		panic("puk")
+	ip, err := getLastUsedIP(device)
+	if err != nil {
+		log.Fatalf("failed to get last used ip: %v", err)
 	}
-
-	if err := WgShow(); err != nil {
-		panic(err)
-	}
-
-	log.Printf("max ip now is: %v", maxIp.String())
-	maxIp.IP.To4()[3] += 1
-	log.Printf("next ip is: %v", maxIp.String())
+	log.Printf("latest used ip: %s", ip.String())
 }
 
 func WgShow() error {
@@ -63,4 +52,39 @@ func WgShow() error {
 	err := cmd.Run()
 	fmt.Println("-------------------")
 	return err
+}
+
+// TODO WIP
+func getDeviceAddress(device *wgtypes.Device) (net.IP, error) {
+	fmt.Println("------ getDeviceAddress -----")
+	ief, err := net.InterfaceByName(device.Name)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get interface "+device.Name)
+	}
+	log.Printf("interface: %+v", ief)
+	fmt.Println("-------------------")
+	addrs, err := ief.Addrs()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get address for interface "+device.Name)
+	}
+	for _, addr := range addrs {
+		log.Printf("%T: %+v", addr, addr)
+	}
+	return nil, nil
+}
+
+func getLastUsedIP(device *wgtypes.Device) (net.IP, error) {
+	fmt.Println("------ getLastUsedIP -----")
+	lastIP := net.ParseIP("0.0.0.0")
+	for _, peer := range device.Peers {
+		for _, ipNet := range peer.AllowedIPs {
+			if bytes.Compare(ipNet.IP, lastIP) >= 0 {
+				lastIP = ipNet.IP
+			}
+		}
+	}
+	if lastIP.Equal(net.ParseIP("0.0.0.0")) {
+		return nil, errors.New("failed to get la")
+	}
+	return lastIP, nil
 }
