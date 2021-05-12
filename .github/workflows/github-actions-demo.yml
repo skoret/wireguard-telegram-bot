@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - wg-keys
+      - github-actions
 
 jobs:
   build:
