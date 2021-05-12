@@ -14,7 +14,7 @@ docker run -d \
   -p 51820:51820/udp \
   -e PEERS=1 \
   -e PEERDNS=auto \
-  -v /etc/wireguard/wg0.conf:/etc/wireguard/wg0.conf:rw \
+  -v /etc/wireguard:/config \
   -v /lib/modules:/lib/modules \
   --restart unless-stopped \
   ghcr.io/linuxserver/wireguard
