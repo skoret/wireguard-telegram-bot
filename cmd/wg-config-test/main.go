@@ -149,10 +149,10 @@ func parseRTNLInterfaces(msgs []syscall.NetlinkMessage) ([]string, error) {
 
 		log.Printf("parse #%d msg:", i)
 		for ad.Next() {
-			log.Printf("type: %d | data: %s", ad.Type(), ad.String())
 			switch ad.Type() {
 			case unix.IFLA_IFNAME:
 				ifi = ad.String()
+				log.Printf("type: %d | data: %s", ad.Type(), ad.String())
 			case unix.IFLA_LINKINFO:
 				ad.Do(isWGKind(&isWG))
 			}
@@ -191,7 +191,7 @@ func isWGKind(ok *bool) func(b []byte) error {
 			if ad.Type() != unix.IFLA_INFO_KIND {
 				continue
 			}
-
+			log.Printf("type: %d | data: %s", ad.Type(), ad.String())
 			if ad.String() == wgKind {
 				*ok = true
 				return nil
