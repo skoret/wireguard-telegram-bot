@@ -1,3 +1,7 @@
+#!/bin/bash
+
+docker stop wireguard && docker rm wireguard
+
 docker run -d \
   --name=wireguard \
   --cap-add=NET_ADMIN \
@@ -5,12 +9,14 @@ docker run -d \
   -e PUID=1000 \
   -e PGID=1000 \
   -e TZ=Europe/London \
-  -e SERVERPORT=35053 \
+  -e SERVERPORT=51820 \
   -e ALLOWEDIPS=0.0.0.0/0 \
-  -p 35053:51820/udp \
+  -p 51820:51820/udp \
   -e PEERS=1 \
   -e PEERDNS=auto \
-  -v /etc/wireguard/wg0.conf:/config/wg0.conf \
+  -v /etc/wireguard/:/etc/wireguard/:rw \
   -v /lib/modules:/lib/modules \
   --restart unless-stopped \
   ghcr.io/linuxserver/wireguard
+
+  docker exec -it wireguard bash
