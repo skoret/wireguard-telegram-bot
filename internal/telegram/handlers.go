@@ -23,7 +23,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) (responses, error) {
 		return responses{res0}, errors.Errorf("message received with unknown command: %s", msg.Command())
 	}
 	res0.Text = cmd.text
-	res0.ReplyMarkup = *cmd.keyboard
+	res0.ReplyMarkup = cmd.keyboard
 	if cmd.handler == nil {
 		return responses{res0}, nil
 	}
