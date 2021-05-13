@@ -6,7 +6,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-type handler func(b *Bot, chatID int64) (tgbotapi.Chattable, error)
+type handler func(b *Bot, chatID int64, arg string) (tgbotapi.Chattable, error)
 
 type command struct {
 	tgbotapi.BotCommand
@@ -42,12 +42,13 @@ var (
 			Command:     "configforkey",
 			Description: "create new config file for given public key",
 		},
-		text: "send me your wireguard public key, please",
+		text: "send me your wireguard public key, like that:\n" +
+			"`/configforkey <your key in base64>`",
 	}
 	DonateCmd = command{
 		BotCommand: tgbotapi.BotCommand{
 			Command:     "donate",
-			Description: "buy me a beer and get a private wg vpn [WIP]",
+			Description: "buy me a beer and get a private wg vpn [not mvp]",
 		},
 		text: "sorry, donations aren't supported yet",
 	}
@@ -77,7 +78,14 @@ var commands = map[string]*command{
 // https://github.com/go-telegram-bot-api/telegram-bot-api/commit/4a2c8c4547a868841c1ec088302b23b59443de2b
 func setMyCommands(api *tgbotapi.BotAPI) error {
 	params := make(tgbotapi.Params)
-	data, err := json.Marshal([]command{MenuCmd, NewConfigCmd, DonateCmd, HelpCmd})
+	data, err := json.Marshal([]command{
+		MenuCmd,
+		NewConfigCmd,
+		ConfigForNewKeysCmd,
+		ConfigForPublicKeyCmd,
+		DonateCmd,
+		HelpCmd,
+	})
 	if err != nil {
 		return err
 	}

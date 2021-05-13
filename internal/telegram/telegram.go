@@ -102,6 +102,9 @@ func (b *Bot) handle(update *tgbotapi.Update) []error {
 }
 
 func (b *Bot) send(c tgbotapi.Chattable) error {
+	if c == nil {
+		return nil
+	}
 	msg, err := b.api.Send(c)
 	log.Printf("send msg: %+v", msg)
 	if err != nil {

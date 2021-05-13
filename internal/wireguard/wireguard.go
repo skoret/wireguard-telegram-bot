@@ -48,7 +48,7 @@ func (w *Wireguard) Close() error {
 	return w.client.Close()
 }
 
-func (w *Wireguard) CreateNewConfig() (io.Reader, error) {
+func (w *Wireguard) CreateConfigForNewKeys() (io.Reader, error) {
 	pri, err := wgtypes.GeneratePrivateKey()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate private key")
@@ -58,13 +58,48 @@ func (w *Wireguard) CreateNewConfig() (io.Reader, error) {
 		return nil, err
 	}
 
+	cfgFile, err := w.createConfig(pri.String(), ipNet)
+	if err != nil {
+		panic(err)
+	}
+
+	// wg server conf update
+	if err := w.updateDevice(pri.PublicKey(), ipNet); err != nil {
+		return nil, err
+	}
+	return cfgFile, nil
+}
+
+func (w *Wireguard) CreateConfigForPublicKey(key string) (io.Reader, error) {
+	pub, err := wgtypes.ParseKey(key)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse public key")
+	}
+	ipNet, err := w.getNextIPNet()
+	if err != nil {
+		return nil, err
+	}
+
+	cfgFile, err := w.createConfig("", ipNet)
+	if err != nil {
+		panic(err)
+	}
+
+	// wg server conf update
+	if err := w.updateDevice(pub, ipNet); err != nil {
+		return nil, err
+	}
+	return cfgFile, nil
+}
+
+func (w *Wireguard) createConfig(pri string, ipNet *net.IPNet) (io.Reader, error) {
 	device, err := w.client.Device(w.device)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get device "+w.device)
 	}
 	clientConfig := cfgs.ClientConfig{
 		Address:    ipNet.String(),
-		PrivateKey: pri.String(),
+		PrivateKey: pri,
 		DNS:        w.dns,
 
 		PublicKey:  device.PublicKey.String(),
@@ -75,9 +110,10 @@ func (w *Wireguard) CreateNewConfig() (io.Reader, error) {
 	if err != nil {
 		panic(err)
 	}
+	return cfgFile, nil
+}
 
-	// wg server conf update
-	pub := pri.PublicKey()
+func (w *Wireguard) updateDevice(pub wgtypes.Key, ipNet *net.IPNet) error {
 	cfg := wgtypes.Config{
 		Peers: []wgtypes.PeerConfig{
 			{
@@ -86,13 +122,6 @@ func (w *Wireguard) CreateNewConfig() (io.Reader, error) {
 			},
 		},
 	}
-	if err := w.updateDevice(cfg); err != nil {
-		return nil, err
-	}
-	return cfgFile, nil
-}
-
-func (w *Wireguard) updateDevice(cfg wgtypes.Config) error {
 	if err := w.client.ConfigureDevice(w.device, cfg); err != nil {
 		return errors.Wrap(err, "failed to update server configuration")
 	}
