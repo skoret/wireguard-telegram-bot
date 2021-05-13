@@ -13,26 +13,26 @@ type responses []tgbotapi.Chattable
 
 func (b *Bot) handleMessage(msg *tgbotapi.Message) (responses, error) {
 	log.Printf("new message: %+v", msg)
-	res := tgbotapi.NewMessage(msg.Chat.ID, "run /menu, silly")
+	res0 := tgbotapi.NewMessage(msg.Chat.ID, "run /menu, silly")
 
 	if !msg.IsCommand() {
-		return responses{res}, nil
+		return responses{res0}, nil
 	}
 	cmd, ok := commands[msg.Command()]
 	if !ok {
-		return responses{res}, errors.Errorf("message received with unknown command: %s", msg.Command())
+		return responses{res0}, errors.Errorf("message received with unknown command: %s", msg.Command())
 	}
-	res.Text = cmd.text
-	res.ReplyMarkup = *cmd.keyboard
+	res0.Text = cmd.text
+	res0.ReplyMarkup = *cmd.keyboard
 	if cmd.handler == nil {
-		return responses{res}, nil
+		return responses{res0}, nil
 	}
 
-	document, err := cmd.handler(b, msg.Chat.ID, msg.CommandArguments())
+	res1, err := cmd.handler(b, msg.Chat.ID, msg.CommandArguments())
 	if err != nil {
 		return responses{errorMessage(msg.Chat.ID, msg.MessageID, false)}, err
 	}
-	return responses{res, document}, nil
+	return responses{res0, res1}, nil
 }
 
 func (b *Bot) handleQuery(query *tgbotapi.CallbackQuery) (responses, error) {
@@ -54,18 +54,18 @@ func (b *Bot) handleQuery(query *tgbotapi.CallbackQuery) (responses, error) {
 	if !ok {
 		return responses{sorryMsg}, errors.Errorf("callback query received with unknown data field: %s", query.Data)
 	}
-	res := tgbotapi.NewEditMessageText(chatID, msgID, cmd.text)
-	res.ReplyMarkup = cmd.keyboard
+	res0 := tgbotapi.NewEditMessageText(chatID, msgID, cmd.text)
+	res0.ReplyMarkup = cmd.keyboard
 
 	if cmd.handler == nil {
-		return responses{res}, nil
+		return responses{res0}, nil
 	}
 
-	document, err := cmd.handler(b, chatID, query.Message.CommandArguments())
+	res1, err := cmd.handler(b, chatID, query.Message.CommandArguments())
 	if err != nil {
 		return responses{sorryMsg}, errors.Wrap(err, "unable to create new config")
 	}
-	return responses{res, document}, nil
+	return responses{res0, res1}, nil
 }
 
 func (b *Bot) handleConfigForNewKeys(chadID int64, _ string) (tgbotapi.Chattable, error) {
@@ -82,6 +82,9 @@ func (b *Bot) handleConfigForNewKeys(chadID int64, _ string) (tgbotapi.Chattable
 }
 
 func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (tgbotapi.Chattable, error) {
+	if arg == "" {
+		return nil, nil
+	}
 	cfg, err := b.wireguard.CreateConfigForPublicKey(arg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new config")

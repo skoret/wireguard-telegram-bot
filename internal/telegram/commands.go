@@ -42,7 +42,7 @@ var (
 			Command:     "configforkey",
 			Description: "create new config file for given public key",
 		},
-		text: "send me your wireguard public key, like that:" +
+		text: "send me your wireguard public key, like that:\n" +
 			"`/configforkey <your key in base64>`",
 	}
 	DonateCmd = command{
@@ -78,7 +78,14 @@ var commands = map[string]*command{
 // https://github.com/go-telegram-bot-api/telegram-bot-api/commit/4a2c8c4547a868841c1ec088302b23b59443de2b
 func setMyCommands(api *tgbotapi.BotAPI) error {
 	params := make(tgbotapi.Params)
-	data, err := json.Marshal([]command{MenuCmd, NewConfigCmd, DonateCmd, HelpCmd})
+	data, err := json.Marshal([]command{
+		MenuCmd,
+		NewConfigCmd,
+		ConfigForNewKeysCmd,
+		ConfigForPublicKeyCmd,
+		DonateCmd,
+		HelpCmd,
+	})
 	if err != nil {
 		return err
 	}
