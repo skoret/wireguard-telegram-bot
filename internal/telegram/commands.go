@@ -6,7 +6,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-type handler func(b *Bot, chatID int64) (tgbotapi.Chattable, error)
+type handler func(b *Bot, chatID int64, arg string) (tgbotapi.Chattable, error)
 
 type command struct {
 	tgbotapi.BotCommand
@@ -42,12 +42,13 @@ var (
 			Command:     "configforkey",
 			Description: "create new config file for given public key",
 		},
-		text: "send me your wireguard public key, please",
+		text: "send me your wireguard public key, like that:" +
+			"`/configforkey <your key in base64>`",
 	}
 	DonateCmd = command{
 		BotCommand: tgbotapi.BotCommand{
 			Command:     "donate",
-			Description: "buy me a beer and get a private wg vpn [WIP]",
+			Description: "buy me a beer and get a private wg vpn [not mvp]",
 		},
 		text: "sorry, donations aren't supported yet",
 	}
