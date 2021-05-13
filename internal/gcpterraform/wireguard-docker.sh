@@ -15,6 +15,7 @@ docker run -d \
   -e PEERDNS=auto \
   -v /etc/wireguard:/config \
   -v /lib/modules:/lib/modules \
+  --sysctl net.ipv6.conf.all.disable_ipv6=0 \
   --restart unless-stopped \
   ghcr.io/linuxserver/wireguard
 
