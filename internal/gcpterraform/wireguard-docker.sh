@@ -9,10 +9,9 @@ docker run -d \
   -e PUID=1000 \
   -e PGID=1000 \
   -e TZ=Europe/London \
-  -e SERVERPORT=51820 \
+  -e SERVERPORT=35053 \
   -e ALLOWEDIPS=0.0.0.0/0 \
-  -p 51820:51820/udp \
-  -e PEERS=1 \
+  -p 35053:51820/udp \
   -e PEERDNS=auto \
   -v /etc/wireguard:/config \
   -v /lib/modules:/lib/modules \
