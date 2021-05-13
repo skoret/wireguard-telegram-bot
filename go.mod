@@ -5,6 +5,9 @@ go 1.16
 require (
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.0.0-rc1.0.20210311030851-d0e1dfd8c604
 	github.com/joho/godotenv v1.3.0
+	github.com/mdlayher/genetlink v1.0.0
+	github.com/mdlayher/netlink v1.4.0
 	github.com/pkg/errors v0.9.1
-	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20200609130330-bd2cb7843e1b
+	golang.org/x/sys v0.0.0-20210503173754-0981d6026fa6
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210506160403-92e472f520a5
 )

@@ -30,30 +30,31 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) (responses, error) {
 func (b *Bot) handleQuery(query *tgbotapi.CallbackQuery) (responses, error) {
 	log.Printf("new callback query: %+v", query)
 
-	msg := query.Message
-	if msg == nil {
+	if query.Message == nil {
 		return nil, errors.New("callback query received without message | it is possible only for inline mode")
 	}
-	res := tgbotapi.NewEditMessageText(msg.Chat.ID, msg.MessageID, "something went wrong, try again later")
-	log.Printf("message from callback: %+v", msg)
+	log.Printf("message from callback: %+v", query.Message)
+	chatID, msgID := query.Message.Chat.ID, query.Message.MessageID
+	sorry := errorMessage(chatID, msgID)
 
 	callback := tgbotapi.NewCallback(query.ID, "")
 	if _, err := b.api.Request(callback); err != nil {
-		return responses{res}, errors.Wrap(err, "failed to process callback query")
+		return responses{sorry}, errors.Wrap(err, "failed to process callback query")
 	}
 
 	cmd, ok := commands[query.Data]
 	if !ok {
-		return responses{res}, errors.Errorf("callback query received with unknown data field: %s", query.Data)
+		return responses{sorry}, errors.Errorf("callback query received with unknown data field: %s", query.Data)
 	}
-	res.Text = cmd.text
+	res := tgbotapi.NewEditMessageText(chatID, msgID, cmd.text)
 	res.ReplyMarkup = cmd.keyboard
+
 	if cmd.handler == nil {
 		return responses{res}, nil
 	}
-	document, err := cmd.handler(b, msg.Chat.ID)
+	document, err := cmd.handler(b, chatID)
 	if err != nil {
-		return responses{res}, errors.Wrap(err, "unable to create new config")
+		return responses{sorry}, errors.Wrap(err, "unable to create new config")
 	}
 	return responses{res, document}, nil
 }
@@ -73,4 +74,13 @@ func (b *Bot) handleConfigForNewKeys(chadID int64) (tgbotapi.Chattable, error) {
 
 func init() {
 	ConfigForNewKeysCmd.handler = (*Bot).handleConfigForNewKeys
+}
+
+func errorMessage(chatID int64, msgID int) tgbotapi.Chattable {
+	return tgbotapi.NewEditMessageTextAndMarkup(
+		chatID, msgID, "something went wrong, sorry 👉🏻👈🏻",
+		tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(goToMenuButton),
+		),
+	)
 }

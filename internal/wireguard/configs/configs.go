@@ -3,7 +3,6 @@ package configs
 import (
 	"errors"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,26 +43,17 @@ const (
 
 var (
 	tmplFolder = os.Getenv("TEMPLATES_FOLDER")
-	clientTmpl = must(
+	clientTmpl = template.Must(
 		template.New(clientTmplFile).
 			Funcs(template.FuncMap{"join": strings.Join}).
 			ParseFiles(filepath.Join(tmplFolder, clientTmplFile)),
 	)
-	serverTmpl = must(
+	serverTmpl = template.Must(
 		template.New(serverTmplFile).
 			Funcs(template.FuncMap{"join": strings.Join}).
 			ParseFiles(filepath.Join(tmplFolder, serverTmplFile)),
 	)
 )
-
-func must(t *template.Template, err error) *template.Template {
-	log.Printf("env variable: %s", os.Getenv("TEMPLATES_FOLDER"))
-	log.Printf("template folder: %s", tmplFolder)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
 
 func ProcessClientConfig(cfg ClientConfig) (io.Reader, error) {
 	return processConfig(cfg)
