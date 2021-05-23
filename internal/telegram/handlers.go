@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 	"time"
 
@@ -97,17 +98,21 @@ func (b *Bot) handleConfigForNewKeys(chadID int64, _ string) (responses, error) 
 	}
 	timestamp := time.Now().Unix()
 	name := strconv.FormatInt(timestamp, 10)
-	medias := tgbotapi.NewMediaGroup(chadID, []interface{}{
-		tgbotapi.NewInputMediaPhoto(tgbotapi.FileReader{
-			Name:   name + ".png",
-			Reader: &qr,
-		}),
-		tgbotapi.NewInputMediaDocument(tgbotapi.FileBytes{
-			Name:  name + ".conf",
-			Bytes: content,
-		}),
+	file0 := tgbotapi.NewPhoto(chadID, tgbotapi.FileReader{
+		Name:   name + ".png",
+		Reader: &qr,
 	})
-	return responses{medias}, nil
+
+	file1 := tgbotapi.NewDocument(chadID, tgbotapi.FileBytes{
+		Name:  name + ".conf",
+		Bytes: content,
+	})
+	thumb, _ := os.Open("assets/logo-min.png")
+	file1.Thumb = tgbotapi.FileReader{
+		Name:   "thumb",
+		Reader: thumb,
+	}
+	return responses{file0, file1}, nil
 }
 
 func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (responses, error) {
