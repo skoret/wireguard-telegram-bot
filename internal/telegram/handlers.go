@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"bytes"
-	"io"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -77,7 +76,16 @@ func (b *Bot) handleConfigForNewKeys(chadID int64, _ string) (responses, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new config")
 	}
-	return handleConfig(chadID, cfg)
+	content, err := ioutil.ReadAll(cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read new config")
+	}
+	file := createFile(chadID, content)
+	qr := createQR(chadID, content)
+	if qr == nil {
+		return responses{file}, nil
+	}
+	return responses{file, qr}, nil
 }
 
 func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (responses, error) {
@@ -88,45 +96,43 @@ func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (responses, err
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new config")
 	}
-	return handleConfig(chadID, cfg)
-}
-
-func handleConfig(chadID int64, cfg io.Reader) (responses, error) {
 	content, err := ioutil.ReadAll(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read new config")
 	}
-	qr, err := createQR(string(content))
-	if err != nil {
-		return nil, err
-	}
+	file := createFile(chadID, content)
+	return responses{file}, nil
+}
+
+func createFile(chadID int64, content []byte) tgbotapi.Chattable {
 	name := strconv.FormatInt(time.Now().Unix(), 10)
-	file0 := tgbotapi.NewPhoto(chadID, tgbotapi.FileReader{
-		Name:   name + ".png",
-		Reader: qr,
-	})
-	file1 := tgbotapi.NewDocument(chadID, tgbotapi.FileBytes{
+	return tgbotapi.NewDocument(chadID, tgbotapi.FileBytes{
 		Name:  name + ".conf",
 		Bytes: content,
 	})
-	return responses{file0, file1}, nil
 }
 
-func createQR(content string) (io.Reader, error) {
+func createQR(chadID int64, content []byte) tgbotapi.Chattable {
 	options := []qrcode.ImageOption{
 		qrcode.WithLogoImageFilePNG("assets/logo-min.png"),
 		qrcode.WithQRWidth(7),
 		qrcode.WithBuiltinImageEncoder(qrcode.PNG_FORMAT),
 	}
-	qrc, err := qrcode.New(content, options...)
+	qrc, err := qrcode.New(string(content), options...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create qr code")
+		log.Printf("failed to create qr code: %v", err)
+		return nil
 	}
-	qr := bytes.Buffer{}
-	if err := qrc.SaveTo(&qr); err != nil {
-		return nil, errors.Wrap(err, "failed to read new qr code")
+	buf := bytes.Buffer{}
+	if err := qrc.SaveTo(&buf); err != nil {
+		log.Printf("failed to read new qr code: %v", err)
+		return nil
 	}
-	return &qr, nil
+	name := strconv.FormatInt(time.Now().Unix(), 10)
+	return tgbotapi.NewPhoto(chadID, tgbotapi.FileReader{
+		Name:   name + ".png",
+		Reader: &buf,
+	})
 }
 
 func init() {
