@@ -38,7 +38,7 @@ func NewWireguard() (*Wireguard, error) {
 	}
 	log.Printf("----------------------")
 	return &Wireguard{
-		device: os.Getenv("PUBLIC_INTERFACE"),
+		device: os.Getenv("WIREGUARD_INTERFACE"),
 		dns:    strings.Split(os.Getenv("DNS_IPS"), ","),
 		client: client,
 	}, nil

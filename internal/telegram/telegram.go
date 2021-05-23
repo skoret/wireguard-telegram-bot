@@ -3,6 +3,8 @@ package telegram
 import (
 	"context"
 	"log"
+	"os"
+	"strings"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -15,6 +17,7 @@ type Bot struct {
 	wg        *sync.WaitGroup
 	api       *tgbotapi.BotAPI
 	wireguard *wireguard.Wireguard
+	admins    map[string]struct{}
 }
 
 // NewBot creates new Bot instance
@@ -34,10 +37,17 @@ func NewBot(token string) (*Bot, error) {
 		return nil, errors.Wrap(err, "failed to create wireguard client")
 	}
 
+	usernames := strings.Split(os.Getenv("ADMIN_USERNAMES"), ",")
+	admins := make(map[string]struct{}, len(usernames))
+	for _, user := range usernames {
+		admins[user] = struct{}{}
+	}
+
 	return &Bot{
 		wg:        &sync.WaitGroup{},
 		api:       api,
 		wireguard: wguard,
+		admins:    admins,
 	}, nil
 }
 
@@ -77,6 +87,17 @@ func (b *Bot) Run(ctx context.Context) error {
 	}
 }
 
+func (b *Bot) auth(user string) bool {
+	_, ok := b.admins[user]
+	return ok
+}
+
+func notAdminMsg(chatID int64) []tgbotapi.Chattable {
+	return []tgbotapi.Chattable{
+		tgbotapi.NewMessage(chatID, "you're not an admin, dude\nsorry not sorry"),
+	}
+}
+
 func (b *Bot) handle(update *tgbotapi.Update) []error {
 	log.Printf("new update: %+v", update)
 	var res []tgbotapi.Chattable
@@ -84,9 +105,19 @@ func (b *Bot) handle(update *tgbotapi.Update) []error {
 	errs := make([]error, 0)
 	switch {
 	case update.Message != nil:
-		res, err = b.handleMessage(update.Message)
+		msg := update.Message
+		if !b.auth(msg.From.UserName) {
+			res = notAdminMsg(msg.Chat.ID)
+		} else {
+			res, err = b.handleMessage(msg)
+		}
 	case update.CallbackQuery != nil:
-		res, err = b.handleQuery(update.CallbackQuery)
+		query := update.CallbackQuery
+		if !b.auth(query.From.UserName) {
+			res = notAdminMsg(query.Message.Chat.ID)
+		} else {
+			res, err = b.handleQuery(query)
+		}
 	default:
 		errs = append(errs, errors.New("unable to handle such update"))
 	}
