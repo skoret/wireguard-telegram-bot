@@ -2,10 +2,9 @@ package telegram
 
 import (
 	"bytes"
-	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
-	"os"
 	"strconv"
 	"time"
 
@@ -78,41 +77,7 @@ func (b *Bot) handleConfigForNewKeys(chadID int64, _ string) (responses, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new config")
 	}
-	// create qrcode
-	content, err := ioutil.ReadAll(cfg)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read new config")
-	}
-	options := []qrcode.ImageOption{
-		qrcode.WithLogoImageFilePNG("assets/logo-min.png"),
-		qrcode.WithQRWidth(7),
-		qrcode.WithBuiltinImageEncoder(qrcode.PNG_FORMAT),
-	}
-	qrc, err := qrcode.New(string(content), options...)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create qr code from config")
-	}
-	qr := bytes.Buffer{}
-	if err := qrc.SaveTo(&qr); err != nil {
-		return nil, errors.Wrap(err, "failed to read new qr code")
-	}
-	timestamp := time.Now().Unix()
-	name := strconv.FormatInt(timestamp, 10)
-	file0 := tgbotapi.NewPhoto(chadID, tgbotapi.FileReader{
-		Name:   name + ".png",
-		Reader: &qr,
-	})
-
-	file1 := tgbotapi.NewDocument(chadID, tgbotapi.FileBytes{
-		Name:  name + ".conf",
-		Bytes: content,
-	})
-	thumb, _ := os.Open("assets/logo-min.png")
-	file1.Thumb = tgbotapi.FileReader{
-		Name:   "thumb",
-		Reader: thumb,
-	}
-	return responses{file0, file1}, nil
+	return handleConfig(chadID, cfg)
 }
 
 func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (responses, error) {
@@ -123,12 +88,45 @@ func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (responses, err
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new config")
 	}
-	timestamp := time.Now().Unix()
-	file := tgbotapi.FileReader{
-		Name:   fmt.Sprintf("wg-tg-%d.conf", timestamp),
-		Reader: cfg,
+	return handleConfig(chadID, cfg)
+}
+
+func handleConfig(chadID int64, cfg io.Reader) (responses, error) {
+	content, err := ioutil.ReadAll(cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read new config")
 	}
-	return responses{tgbotapi.NewDocument(chadID, file)}, nil
+	qr, err := createQR(string(content))
+	if err != nil {
+		return nil, err
+	}
+	name := strconv.FormatInt(time.Now().Unix(), 10)
+	file0 := tgbotapi.NewPhoto(chadID, tgbotapi.FileReader{
+		Name:   name + ".png",
+		Reader: qr,
+	})
+	file1 := tgbotapi.NewDocument(chadID, tgbotapi.FileBytes{
+		Name:  name + ".conf",
+		Bytes: content,
+	})
+	return responses{file0, file1}, nil
+}
+
+func createQR(content string) (io.Reader, error) {
+	options := []qrcode.ImageOption{
+		qrcode.WithLogoImageFilePNG("assets/logo-min.png"),
+		qrcode.WithQRWidth(7),
+		qrcode.WithBuiltinImageEncoder(qrcode.PNG_FORMAT),
+	}
+	qrc, err := qrcode.New(content, options...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create qr code")
+	}
+	qr := bytes.Buffer{}
+	if err := qrc.SaveTo(&qr); err != nil {
+		return nil, errors.Wrap(err, "failed to read new qr code")
+	}
+	return &qr, nil
 }
 
 func init() {
