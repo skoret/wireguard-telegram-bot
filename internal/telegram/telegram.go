@@ -37,10 +37,13 @@ func NewBot(token string) (*Bot, error) {
 		return nil, errors.Wrap(err, "failed to create wireguard client")
 	}
 
-	usernames := strings.Split(os.Getenv("ADMIN_USERNAMES"), ",")
-	admins := make(map[string]struct{}, len(usernames))
-	for _, user := range usernames {
-		admins[user] = struct{}{}
+	var admins map[string]struct{}
+	if usernames := os.Getenv("ADMIN_USERNAMES"); len(usernames) != 0 {
+		users := strings.Split(usernames, ",")
+		admins = make(map[string]struct{}, len(users))
+		for _, user := range users {
+			admins[user] = struct{}{}
+		}
 	}
 
 	return &Bot{
@@ -88,6 +91,9 @@ func (b *Bot) Run(ctx context.Context) error {
 }
 
 func (b *Bot) auth(user string) bool {
+	if len(b.admins) == 0 {
+		return true
+	}
 	_, ok := b.admins[user]
 	return ok
 }

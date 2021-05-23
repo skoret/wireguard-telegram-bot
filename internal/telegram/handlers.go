@@ -88,7 +88,7 @@ func (b *Bot) handleConfigForNewKeys(chatID int64, _ string) (responses, error) 
 	if qr == nil {
 		return responses{file}, nil
 	}
-	return responses{file, qr}, nil
+	return responses{qr, file}, nil
 }
 
 func (b *Bot) handleConfigForPublicKey(chatID int64, arg string) (responses, error) {
