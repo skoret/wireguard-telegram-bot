@@ -6,7 +6,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-type handler func(b *Bot, chatID int64, arg string) (tgbotapi.Chattable, error)
+type handler func(b *Bot, chatID int64, arg string) (responses, error)
 
 type command struct {
 	tgbotapi.BotCommand

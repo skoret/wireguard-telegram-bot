@@ -1,12 +1,16 @@
 package telegram
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"strconv"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
+	"github.com/yeqown/go-qrcode"
 )
 
 type responses []tgbotapi.Chattable
@@ -32,7 +36,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) (responses, error) {
 	if err != nil {
 		return responses{errorMessage(msg.Chat.ID, msg.MessageID, false)}, err
 	}
-	return responses{res0, res1}, nil
+	return append(responses{res0}, res1...), nil
 }
 
 func (b *Bot) handleQuery(query *tgbotapi.CallbackQuery) (responses, error) {
@@ -65,23 +69,48 @@ func (b *Bot) handleQuery(query *tgbotapi.CallbackQuery) (responses, error) {
 	if err != nil {
 		return responses{sorryMsg}, errors.Wrap(err, "unable to create new config")
 	}
-	return responses{res0, res1}, nil
+	return append(responses{res0}, res1...), nil
 }
 
-func (b *Bot) handleConfigForNewKeys(chadID int64, _ string) (tgbotapi.Chattable, error) {
+func (b *Bot) handleConfigForNewKeys(chadID int64, _ string) (responses, error) {
 	cfg, err := b.wireguard.CreateConfigForNewKeys()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new config")
 	}
-	timestamp := time.Now().Unix()
-	file := tgbotapi.FileReader{
-		Name:   fmt.Sprintf("wg-tg-%d.conf", timestamp),
-		Reader: cfg,
+	// create qrcode
+	content, err := ioutil.ReadAll(cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read new config")
 	}
-	return tgbotapi.NewDocument(chadID, file), nil
+	options := []qrcode.ImageOption{
+		qrcode.WithLogoImageFilePNG("assets/logo-min.png"),
+		qrcode.WithQRWidth(7),
+		qrcode.WithBuiltinImageEncoder(qrcode.PNG_FORMAT),
+	}
+	qrc, err := qrcode.New(string(content), options...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create qr code from config")
+	}
+	qr := bytes.Buffer{}
+	if err := qrc.SaveTo(&qr); err != nil {
+		return nil, errors.Wrap(err, "failed to read new qr code")
+	}
+	timestamp := time.Now().Unix()
+	name := strconv.FormatInt(timestamp, 10)
+	medias := tgbotapi.NewMediaGroup(chadID, []interface{}{
+		tgbotapi.NewInputMediaPhoto(tgbotapi.FileReader{
+			Name:   name + ".png",
+			Reader: &qr,
+		}),
+		tgbotapi.NewInputMediaDocument(tgbotapi.FileBytes{
+			Name:  name + ".conf",
+			Bytes: content,
+		}),
+	})
+	return responses{medias}, nil
 }
 
-func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (tgbotapi.Chattable, error) {
+func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (responses, error) {
 	if arg == "" {
 		return nil, nil
 	}
@@ -94,7 +123,7 @@ func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (tgbotapi.Chatt
 		Name:   fmt.Sprintf("wg-tg-%d.conf", timestamp),
 		Reader: cfg,
 	}
-	return tgbotapi.NewDocument(chadID, file), nil
+	return responses{tgbotapi.NewDocument(chadID, file)}, nil
 }
 
 func init() {
