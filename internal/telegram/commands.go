@@ -23,45 +23,38 @@ var (
 		},
 		text: "so, what do you want?",
 	}
-	NewConfigCmd = command{
-		BotCommand: tgbotapi.BotCommand{
-			Command:     "newconfing",
-			Description: "create new config file for public server",
-		},
-		text: "do you want new config for new generated key pair or for your public key?",
-	}
 	ConfigForNewKeysCmd = command{
 		BotCommand: tgbotapi.BotCommand{
-			Command:     "fornewkeys",
-			Description: "create new config file for new generated key pair",
+			Command:     "newkeys",
+			Description: "new config for new key pair",
 		},
-		text: "this is your new config for public wireguard vpn server, keep it in secret!",
+		text: "",
 	}
 	ConfigForPublicKeyCmd = command{
 		BotCommand: tgbotapi.BotCommand{
-			Command:     "forpubkey",
-			Description: "create new config file for given public key",
+			Command:     "pubkey",
+			Description: "new config for your public key",
 		},
 		text: "send me your wireguard public key, like that:\n" +
-			"`/forpubkey <your key in base64>`",
+			"`/pubkey <your key in base64>`",
 	}
 	HelpCmd = command{
 		BotCommand: tgbotapi.BotCommand{
 			Command:     "help",
 			Description: "show bot's functionality with description",
 		},
-		text: "hi, i'm wireguard bot\n\n" +
-			"i can create new wg vpn configuration files for you\n" +
-			// TODO: write proper help message
-			"TODO: write proper help message",
+		text: "hi, i'm wireguard bot\n" +
+			"i can create new wireguard vpn configuration files for you\n\n" +
+			"/menu — available commands\n" +
+			"/newkeys — new config for new key pair\n" +
+			"/pubkey — new config for your public key\n" +
+			"/help — this message",
 	}
 )
 
 var commands = map[string]*command{
 	MenuCmd.Command:               &MenuCmd,
-	NewConfigCmd.Command:          &NewConfigCmd,
 	ConfigForNewKeysCmd.Command:   &ConfigForNewKeysCmd,
-	ConfigForPublicKeyCmd.Command: &ConfigForPublicKeyCmd,
 	ConfigForPublicKeyCmd.Command: &ConfigForPublicKeyCmd,
 	HelpCmd.Command:               &HelpCmd,
 }
@@ -72,7 +65,6 @@ func setMyCommands(api *tgbotapi.BotAPI) error {
 	params := make(tgbotapi.Params)
 	data, err := json.Marshal([]command{
 		MenuCmd,
-		NewConfigCmd,
 		ConfigForNewKeysCmd,
 		ConfigForPublicKeyCmd,
 		HelpCmd,

@@ -83,12 +83,13 @@ func (b *Bot) handleConfigForNewKeys(chatID int64, _ string) (responses, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read new config")
 	}
+	msg := tgbotapi.NewMessage(chatID, emoji())
 	file := createFile(chatID, content)
 	qr := createQR(chatID, content)
 	if qr == nil {
 		return responses{file}, nil
 	}
-	return responses{qr, file}, nil
+	return responses{msg, qr, file}, nil
 }
 
 func (b *Bot) handleConfigForPublicKey(chatID int64, arg string) (responses, error) {
@@ -104,7 +105,7 @@ func (b *Bot) handleConfigForPublicKey(chatID int64, arg string) (responses, err
 		return nil, errors.Wrap(err, "failed to read new config")
 	}
 	file := createFile(chatID, content)
-	msg := tgbotapi.NewMessage(chatID, "past your private in this file")
+	msg := tgbotapi.NewMessage(chatID, "past your private key in file")
 	return responses{msg, file}, nil
 }
 

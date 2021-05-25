@@ -17,13 +17,7 @@ import (
 	cfgs "github.com/skoret/wireguard-bot/internal/wireguard/configs"
 )
 
-type Wireguard struct {
-	device string
-	dns    []string
-	client *wgctrl.Client
-}
-
-func NewWireguard() (*Wireguard, error) {
+func NewWireguard() (Wireguard, error) {
 	client, err := wgctrl.New()
 	if err != nil {
 		return nil, err
@@ -37,18 +31,24 @@ func NewWireguard() (*Wireguard, error) {
 		log.Printf("#%d device: %+v", i, d)
 	}
 	log.Printf("----------------------")
-	return &Wireguard{
+	return &wireguard{
 		device: os.Getenv("WIREGUARD_INTERFACE"),
 		dns:    strings.Split(os.Getenv("DNS_IPS"), ","),
 		client: client,
 	}, nil
 }
 
-func (w *Wireguard) Close() error {
+type wireguard struct {
+	device string
+	dns    []string
+	client *wgctrl.Client
+}
+
+func (w *wireguard) Close() error {
 	return w.client.Close()
 }
 
-func (w *Wireguard) CreateConfigForNewKeys() (io.Reader, error) {
+func (w *wireguard) CreateConfigForNewKeys() (io.Reader, error) {
 	pri, err := wgtypes.GeneratePrivateKey()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate private key")
@@ -70,7 +70,7 @@ func (w *Wireguard) CreateConfigForNewKeys() (io.Reader, error) {
 	return cfgFile, nil
 }
 
-func (w *Wireguard) CreateConfigForPublicKey(key string) (io.Reader, error) {
+func (w *wireguard) CreateConfigForPublicKey(key string) (io.Reader, error) {
 	pub, err := wgtypes.ParseKey(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse public key")
@@ -92,7 +92,7 @@ func (w *Wireguard) CreateConfigForPublicKey(key string) (io.Reader, error) {
 	return cfgFile, nil
 }
 
-func (w *Wireguard) createConfig(pri string, ipNet *net.IPNet) (io.Reader, error) {
+func (w *wireguard) createConfig(pri string, ipNet *net.IPNet) (io.Reader, error) {
 	device, err := w.client.Device(w.device)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get device "+w.device)
@@ -113,7 +113,7 @@ func (w *Wireguard) createConfig(pri string, ipNet *net.IPNet) (io.Reader, error
 	return cfgFile, nil
 }
 
-func (w *Wireguard) updateDevice(pub wgtypes.Key, ipNet *net.IPNet) error {
+func (w *wireguard) updateDevice(pub wgtypes.Key, ipNet *net.IPNet) error {
 	cfg := wgtypes.Config{
 		Peers: []wgtypes.PeerConfig{
 			{
@@ -133,7 +133,7 @@ func (w *Wireguard) updateDevice(pub wgtypes.Key, ipNet *net.IPNet) error {
 	return nil
 }
 
-func (w *Wireguard) getNextIPNet() (*net.IPNet, error) {
+func (w *wireguard) getNextIPNet() (*net.IPNet, error) {
 	ip, err := w.getLatestUsedIP()
 	if err != nil {
 		return nil, err
@@ -157,7 +157,7 @@ func nextIP(ip net.IP, inc uint) net.IP {
 	return net.IPv4(v0, v1, v2, v3)
 }
 
-func (w *Wireguard) getLatestUsedIP() (net.IP, error) {
+func (w *wireguard) getLatestUsedIP() (net.IP, error) {
 	device, err := w.client.Device(w.device)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get device "+w.device)
@@ -179,7 +179,7 @@ func (w *Wireguard) getLatestUsedIP() (net.IP, error) {
 	return lastIP, nil
 }
 
-func (w *Wireguard) getDeviceAddress() (net.IP, error) {
+func (w *wireguard) getDeviceAddress() (net.IP, error) {
 	ife, err := net.InterfaceByName(w.device)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get interface "+w.device)
