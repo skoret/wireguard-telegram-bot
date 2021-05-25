@@ -43,7 +43,7 @@ var (
 			Command:     "help",
 			Description: "show bot's functionality with description",
 		},
-		text: "hi, i'm wireguard bot\n" +
+		text: "hi, i'm wireguard telegram bot\n" +
 			"i can create new wireguard vpn configuration files for you\n\n" +
 			"/menu — available commands\n" +
 			"/newkeys — new config for new key pair\n" +
