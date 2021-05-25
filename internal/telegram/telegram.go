@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -16,7 +17,7 @@ import (
 type Bot struct {
 	wg        *sync.WaitGroup
 	api       *tgbotapi.BotAPI
-	wireguard *wireguard.Wireguard
+	wireguard wireguard.Wireguard
 	admins    map[string]struct{}
 }
 
@@ -32,7 +33,12 @@ func NewBot(token string) (*Bot, error) {
 		return nil, err
 	}
 
-	wguard, err := wireguard.NewWireguard()
+	var wguard wireguard.Wireguard
+	if devMode, _ := strconv.ParseBool(os.Getenv("DEV_MODE")); devMode {
+		wguard, err = wireguard.NewDevWireguard()
+	} else {
+		wguard, err = wireguard.NewWireguard()
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create wireguard client")
 	}
