@@ -35,7 +35,10 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) (responses, error) {
 	if err != nil {
 		return responses{errorMessage(msg.Chat.ID, msg.MessageID, false)}, err
 	}
-	return append(responses{res0}, res1...), nil
+	if res1 == nil {
+		return responses{res0}, nil
+	}
+	return res1, nil
 }
 
 func (b *Bot) handleQuery(query *tgbotapi.CallbackQuery) (responses, error) {
@@ -71,7 +74,7 @@ func (b *Bot) handleQuery(query *tgbotapi.CallbackQuery) (responses, error) {
 	return append(responses{res0}, res1...), nil
 }
 
-func (b *Bot) handleConfigForNewKeys(chadID int64, _ string) (responses, error) {
+func (b *Bot) handleConfigForNewKeys(chatID int64, _ string) (responses, error) {
 	cfg, err := b.wireguard.CreateConfigForNewKeys()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new config")
@@ -80,15 +83,15 @@ func (b *Bot) handleConfigForNewKeys(chadID int64, _ string) (responses, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read new config")
 	}
-	file := createFile(chadID, content)
-	qr := createQR(chadID, content)
+	file := createFile(chatID, content)
+	qr := createQR(chatID, content)
 	if qr == nil {
 		return responses{file}, nil
 	}
-	return responses{file, qr}, nil
+	return responses{qr, file}, nil
 }
 
-func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (responses, error) {
+func (b *Bot) handleConfigForPublicKey(chatID int64, arg string) (responses, error) {
 	if arg == "" {
 		return nil, nil
 	}
@@ -100,19 +103,20 @@ func (b *Bot) handleConfigForPublicKey(chadID int64, arg string) (responses, err
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read new config")
 	}
-	file := createFile(chadID, content)
-	return responses{file}, nil
+	file := createFile(chatID, content)
+	msg := tgbotapi.NewMessage(chatID, "past your private in this file")
+	return responses{msg, file}, nil
 }
 
-func createFile(chadID int64, content []byte) tgbotapi.Chattable {
+func createFile(chatID int64, content []byte) tgbotapi.Chattable {
 	name := strconv.FormatInt(time.Now().Unix(), 10)
-	return tgbotapi.NewDocument(chadID, tgbotapi.FileBytes{
+	return tgbotapi.NewDocument(chatID, tgbotapi.FileBytes{
 		Name:  name + ".conf",
 		Bytes: content,
 	})
 }
 
-func createQR(chadID int64, content []byte) tgbotapi.Chattable {
+func createQR(chatID int64, content []byte) tgbotapi.Chattable {
 	options := []qrcode.ImageOption{
 		qrcode.WithLogoImageFilePNG("assets/logo-min.png"),
 		qrcode.WithQRWidth(7),
@@ -129,7 +133,7 @@ func createQR(chadID int64, content []byte) tgbotapi.Chattable {
 		return nil
 	}
 	name := strconv.FormatInt(time.Now().Unix(), 10)
-	return tgbotapi.NewPhoto(chadID, tgbotapi.FileReader{
+	return tgbotapi.NewPhoto(chatID, tgbotapi.FileReader{
 		Name:   name + ".png",
 		Reader: &buf,
 	})

@@ -32,25 +32,18 @@ var (
 	}
 	ConfigForNewKeysCmd = command{
 		BotCommand: tgbotapi.BotCommand{
-			Command:     "generatekeys",
+			Command:     "fornewkeys",
 			Description: "create new config file for new generated key pair",
 		},
 		text: "this is your new config for public wireguard vpn server, keep it in secret!",
 	}
 	ConfigForPublicKeyCmd = command{
 		BotCommand: tgbotapi.BotCommand{
-			Command:     "configforkey",
+			Command:     "forpubkey",
 			Description: "create new config file for given public key",
 		},
 		text: "send me your wireguard public key, like that:\n" +
-			"`/configforkey <your key in base64>`",
-	}
-	DonateCmd = command{
-		BotCommand: tgbotapi.BotCommand{
-			Command:     "donate",
-			Description: "buy me a beer and get a private wg vpn [not mvp]",
-		},
-		text: "sorry, donations aren't supported yet",
+			"`/forpubkey <your key in base64>`",
 	}
 	HelpCmd = command{
 		BotCommand: tgbotapi.BotCommand{
@@ -70,7 +63,6 @@ var commands = map[string]*command{
 	ConfigForNewKeysCmd.Command:   &ConfigForNewKeysCmd,
 	ConfigForPublicKeyCmd.Command: &ConfigForPublicKeyCmd,
 	ConfigForPublicKeyCmd.Command: &ConfigForPublicKeyCmd,
-	DonateCmd.Command:             &DonateCmd,
 	HelpCmd.Command:               &HelpCmd,
 }
 
@@ -83,7 +75,6 @@ func setMyCommands(api *tgbotapi.BotAPI) error {
 		NewConfigCmd,
 		ConfigForNewKeysCmd,
 		ConfigForPublicKeyCmd,
-		DonateCmd,
 		HelpCmd,
 	})
 	if err != nil {
