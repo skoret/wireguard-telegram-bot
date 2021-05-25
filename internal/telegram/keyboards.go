@@ -8,17 +8,12 @@ func (cmd command) button() tgbotapi.InlineKeyboardButton {
 
 var (
 	menuKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(NewConfigCmd.button()),
+		tgbotapi.NewInlineKeyboardRow(ConfigForNewKeysCmd.button()),
+		tgbotapi.NewInlineKeyboardRow(ConfigForPublicKeyCmd.button()),
 		tgbotapi.NewInlineKeyboardRow(HelpCmd.button()),
 	)
 
 	goToMenuButton = tgbotapi.NewInlineKeyboardButtonData("go to menu", MenuCmd.Command)
-
-	newConfigKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(ConfigForNewKeysCmd.button()),
-		tgbotapi.NewInlineKeyboardRow(ConfigForPublicKeyCmd.button()),
-		tgbotapi.NewInlineKeyboardRow(goToMenuButton),
-	)
 
 	configForPublicKeyKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
@@ -37,7 +32,6 @@ var (
 
 func init() {
 	MenuCmd.keyboard = &menuKeyboard
-	NewConfigCmd.keyboard = &newConfigKeyboard
 	ConfigForPublicKeyCmd.keyboard = &configForPublicKeyKeyboard
 	HelpCmd.keyboard = &helpKeyboard
 }
