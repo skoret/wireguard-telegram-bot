@@ -13,7 +13,8 @@ Simple-Dimple Telegram Bot for Wireguard VPN config generation
 
 ## Public Wireguard Telegram Bot
 
-Just drop a message to [@wrgrdtgbot](https://t.me/wrgrdtgbot) and ask him for some new config files for you and your friends
+Just drop a message to [@wrgrdtgbot](https://t.me/wrgrdtgbot) and ask him for some new config for you and your friends   
+[Install](https://www.wireguard.com/install/) Wireguard client for your device and import generated file or scan qr code
 
 <p align="center">
   <img alt="bot screen 1" src="https://github.com/skoret/wireguard-telegram-bot/raw/dev/assets/bot/bot_1.png" width="300" />
